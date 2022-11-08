@@ -6,7 +6,7 @@
 
 ## Features
 
-Mach currently supports bundling both JavaScript and TypeScript React instruments. Instruments built with the [MSFS Avionics Framework](https://microsoft.github.io/msfs-avionics-mirror/docs/intro/) are also supported, but require additional steps to ensure compatibility as described [here](#msfs-avionics-framework-compatibility).
+Mach currently supports bundling both JavaScript and TypeScript React instruments, along with any CSS or SCSS stylesheets and images that are included. Instruments built with the [MSFS Avionics Framework](https://microsoft.github.io/msfs-avionics-mirror/docs/intro/) are also supported, but require additional steps to ensure compatibility as described [here](#msfs-avionics-framework-compatibility).
 
 Mach also allows you to create nested instruments, enabling you to bundle MSFS Avionics instruments separately and import them into your React instrument.
 

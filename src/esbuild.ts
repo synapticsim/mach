@@ -1,4 +1,6 @@
 import esbuild, { BuildOptions, Plugin } from 'esbuild';
+import imageInline from 'esbuild-plugin-inline-image';
+import { sassPlugin } from 'esbuild-sass-plugin';
 import chokidar from 'chokidar';
 import path from 'path';
 import fs from 'fs/promises';
@@ -89,7 +91,7 @@ async function build(instrument: Instrument, logger: BuildLogger, module = false
         logLevel: 'silent',
         incremental: true,
         metafile: true,
-        plugins: [],
+        plugins: [imageInline({ limit: -1 }), sassPlugin()],
         define: {
             'process.env.MODULE': module.toString(),
             'process.env.NODE_ENV': `"${process.env.NODE_ENV}"`,
