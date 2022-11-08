@@ -1,0 +1,84 @@
+# Mach
+
+**Mach** is an ultra-fast transpiler and bundler for use with MSFS (Microsoft Flight Simulator 2020) instruments. Unlike other bundling tools such as *rollup* or *webpack*, Mach has been built from the ground up with the sole purpose of serving the MSFS development community's needs.
+
+![](https://i.imgur.com/9pRuFG9.gif)
+
+## Features
+
+Mach currently supports bundling both JavaScript and TypeScript React instruments. Instruments built with the [MSFS Avionics Framework](https://microsoft.github.io/msfs-avionics-mirror/docs/intro/) are also supported, but require additional steps to ensure compatibility as described [here](#msfs-avionics-framework-compatibility).
+
+Mach also allows you to create nested instruments, enabling you to bundle MSFS Avionics instruments separately and import them into your React instrument.
+
+## Usage
+
+### CLI
+
+#### Options
+
+- `-c, --config <filename>` specify path to configuration file (default: `./mach.config.json`)
+- `-b, --bundles <dirname>` bundles output directory (default: `./bundles`)
+- `-f, --filter <regex>` regex filter of included instrument names
+- `--output-metafile` output `build_meta.json` file to bundles directory
+
+#### `mach build [options]`
+
+The `build` command will simply go through each instrument defined in your [configuration](#configuration), then output the bundles and package source files to the configured directories.
+
+#### `mach watch [options]`
+
+The `watch` command will first build each instrument in the configuration, and then watch the source files for changes in order to re-bundle the instrument. **If there was an error while bundling the instrument in the beginning, the watcher will not run.**
+
+
+### JavaScript
+
+#### `async function machBuild(conf: MetaConfig, filter?: RegExp)`
+
+This function has the same behavior as the [`mach build [options]`](#mach-build-options) CLI command.
+
+#### `async function machWatch(conf: MetaConfig, filter?: RegExp)`
+
+This function has the same behavior as the [`mach watch [options]`](#mach-watch-options) CLI command.
+
+
+## Configuration
+
+Whether you supply the configuration with the `mach.config.json` file to the CLI or with a JavaScript object to the API, the structure is identical.
+```ts
+interface MachConfig {
+    /** Path to PackageSources directory */
+    packagesDir: string;
+    /** All instruments to be bundled by Mach */
+    instruments: Instrument[];
+}
+
+interface Instrument {
+    /** Instrument name, used as directory name for bundles and packages. */
+    name: string;
+    /** Path to directory containing instrument `config.json`. */
+    directory: string;
+    /** Entrypoint filename for instrument. Defaults to `index` value in instrument `config.json`. */
+    input?: string;
+
+    /** Imports to include in simulator export. */
+    imports?: string[];
+    /** Alows skipping simulator export */
+    skipPackageSources?: boolean;
+
+    /** Instruments to import as ESM modules. */
+    modules?: Instrument[];
+    /** Required for modules. Import to resolve to the bundled module. */
+    import?: string;
+}
+```
+
+
+## MSFS Avionics Framework Compatibility
+
+For compatibility with Mach, a modification must be made to the `msfs-avionics` source code:
+```diff
+# src/sdk/components/FSComponent.ts
+- [357]   if (typeof type === 'function' && type.name === 'Fragment') {
++ [357]   if (typeof type === 'function' && type.name === Fragment.name) {
+```
+These changes are also available through the [`@synaptic-simulations/msfssdk`](https://www.npmjs.com/package/@synaptic-simulations/msfssdk) npm package.
