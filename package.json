@@ -9,7 +9,7 @@
   },
   "scripts": {
     "build": "tsc",
-    "watch": "nodemon --watch . --watch src --ext ts --exec \"yarn build || exit 1\"",
+    "watch": "nodemon --watch index.ts --watch src --ext ts --exec \"yarn build || exit 1\"",
     "test": "echo \"Error: no test specified\" && exit 1"
   },
   "keywords": [

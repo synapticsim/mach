@@ -53,6 +53,6 @@ export class BuildLogger {
 
     changeDetected(file: string) {
         console.clear();
-        signale.watch(`Change detected in ${path.relative(path.dirname(__dirname), file)}, rebuilding\n`);
+        signale.watch(`Change detected in ${path.relative(process.cwd(), file)}, rebuilding\n`);
     }
 }
