@@ -1,4 +1,4 @@
-import esbuild, { BuildOptions, Plugin } from 'esbuild';
+import esbuild, { BuildIncremental, BuildOptions, Plugin } from 'esbuild';
 import imageInline from 'esbuild-plugin-inline-image';
 import { sassPlugin } from 'esbuild-sass-plugin';
 import chokidar from 'chokidar';
@@ -181,37 +181,41 @@ export async function watchInstrument(instrument: Instrument, logger: BuildLogge
         logger.changeDetected(filePath);
 
         const startTime = performance.now();
-        const success = await result.rebuild()
-            .then((res) => {
-                result = res as BuildResultWithMeta;
-                return true;
-            })
-            .catch((res) => {
-                result = res as BuildResultWithMeta;
-                logger.buildFailed(result.errors);
-                return false;
+        const { success, res } = await result.rebuild()
+            .then((res: BuildIncremental) => ({
+                success: true,
+                res: res as BuildResultWithMeta,
+            }))
+            .catch((res: BuildIncremental) => {
+                logger.buildFailed(res.errors);
+                return {
+                    success: false,
+                    res: res as BuildResultWithMeta,
+                };
             });
         const endTime = performance.now();
 
         if (success) {
+            result = res as BuildResultWithMeta;
+
             logger.buildComplete(instrument.name, endTime - startTime, result);
-        }
 
-        const watchedFiles = watcher.getWatched();
-        const bundledFiles = Object.keys(result.metafile.inputs).map((input) => path.resolve(input));
+            const watchedFiles = watcher.getWatched();
+            const bundledFiles = Object.keys(result.metafile.inputs).map((input) => path.resolve(input));
 
-        // Watch files that have been added to the bundle
-        for (const file of bundledFiles) {
-            if (!watchedFiles[path.dirname(file)]?.includes(path.basename(file))) {
-                watcher.add(file);
+            // Watch files that have been added to the bundle
+            for (const file of bundledFiles) {
+                if (!watchedFiles[path.dirname(file)]?.includes(path.basename(file))) {
+                    watcher.add(file);
+                }
             }
-        }
-        // Unwatch files that are no longer included in the bundle
-        for (const [dir, files] of Object.entries(watchedFiles)) {
-            for (const file of files) {
-                const filePath = path.join(dir, file);
-                if (!bundledFiles.includes(filePath)) {
-                    watcher.unwatch(filePath);
+            // Unwatch files that are no longer included in the bundle
+            for (const [dir, files] of Object.entries(watchedFiles)) {
+                for (const file of files) {
+                    const filePath = path.join(dir, file);
+                    if (!bundledFiles.includes(filePath)) {
+                        watcher.unwatch(filePath);
+                    }
                 }
             }
         }
