@@ -1,0 +1,42 @@
+{
+  "name": "@synaptic-simulations/mach",
+  "version": "1.0.0-rc1",
+  "description": "The last MSFS instrument bundler you'll ever need.",
+  "main": "./dist/index.js",
+  "types": "./dist/index.d.ts",
+  "bin": {
+    "mach": "./dist/index.js"
+  },
+  "scripts": {
+    "build": "tsc",
+    "watch": "nodemon --watch . --watch src --ext ts --exec \"yarn build || exit 1\"",
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "keywords": [
+    "msfs",
+    "bundler",
+    "esbuild"
+  ],
+  "author": "Michael Romashov <mromashov@icloud.com>",
+  "repository": "https://github.com/Synaptic-Simulations/msfs-build",
+  "license": "MIT",
+  "dependencies": {
+    "chalk": "^4.1.2",
+    "chokidar": "^3.5.3",
+    "commander": "^9.4.1",
+    "esbuild": "^0.15.13",
+    "filesize": "^10.0.5",
+    "signale": "^1.4.0",
+    "zod": "^3.19.1"
+  },
+  "devDependencies": {
+    "@flybywiresim/eslint-config": "^0.1.0",
+    "@types/node": "^16.18.3",
+    "@types/signale": "^1.4.4",
+    "@typescript-eslint/eslint-plugin": "^5.42.1",
+    "@typescript-eslint/parser": "^5.42.1",
+    "eslint": "^7.23.0",
+    "nodemon": "^2.0.20",
+    "typescript": "^4.8.4"
+  }
+}
