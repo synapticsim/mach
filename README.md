@@ -72,6 +72,29 @@ interface Instrument {
 }
 ```
 
+### Example
+```
+{
+    "packagesDir": "PackageSources/html_ui/Pages/VCockpit/Instruments/a22x",
+    "instruments": [
+        {
+            "name": "DisplayUnits",
+            "directory": "src/instruments/src/DisplayUnits",
+            "imports": ["/JS/dataStorage.js"],
+        },
+        {
+            "name": "CTP",
+            "directory": "src/instruments/src/CTP",
+            "imports": ["/JS/dataStorage.js"]
+        },
+        {
+            "name": "ISI",
+            "directory": "src/instruments/src/ISI"
+        }
+    ]
+}
+```
+
 
 ## MSFS Avionics Framework Compatibility
 
