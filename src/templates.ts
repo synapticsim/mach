@@ -41,7 +41,7 @@ export const htmlTemplate = (packagesDir: string, name: string, imports: string[
     </style>
 </script>
 ${imports.map((i) => `<script type="text/html" import-script="${i}" import-async="false"></script>\n`)}
-<script type="text/html" import-script="${packagesDir}/${name}/template.js" import-async="false"></script>
+<script type="text/html" import-script="/Pages/VCockpit/Instruments/${process.env.PACKAGE_NAME}/${name}/template.js" import-async="false"></script>
 `;
 
 export const jsTemplate = (packageName: string, name: string, isInteractive: boolean) => `
