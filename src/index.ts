@@ -22,7 +22,7 @@ export async function machBuild(conf: MachConfig, filter?: RegExp) {
     const startTime = performance.now();
     Promise.all(
         instruments.map(async (instrument) => {
-            const result = await buildInstrument(instrument, new BuildLogger(instrument.name));
+            const result = await buildInstrument(conf, instrument, new BuildLogger(instrument.name));
             result.rebuild?.dispose();
             return result;
         }),
@@ -42,7 +42,7 @@ export async function machWatch(conf: MachConfig, filter?: RegExp) {
     const instruments = conf.instruments.filter((instrument) => filter?.test(instrument.name) ?? true);
 
     Promise.all(
-        instruments.map((instrument) => watchInstrument(instrument, new BuildLogger(instrument.name))),
+        instruments.map((instrument) => watchInstrument(conf, instrument, new BuildLogger(instrument.name))),
     ).then((results) => {
         if (results.some((res) => res.errors.length > 0)) {
             signale.error('Watch mode requires a build-able bundle to initialize');

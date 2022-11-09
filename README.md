@@ -75,6 +75,7 @@ interface Instrument {
 ### Example
 ```
 {
+    "packageName": "a22x",
     "packagesDir": "PackageSources/html_ui/Pages/VCockpit/Instruments/a22x",
     "instruments": [
         {

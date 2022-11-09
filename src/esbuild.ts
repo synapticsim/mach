@@ -5,7 +5,7 @@ import chokidar from 'chokidar';
 import path from 'path';
 import fs from 'fs/promises';
 import { htmlTemplate, jsTemplate } from './templates';
-import { BuildResultWithMeta, Instrument } from './types';
+import { BuildResultWithMeta, Instrument, MachConfig } from './types';
 import { BuildLogger } from './logger';
 
 /**
@@ -57,7 +57,7 @@ const writeMetafile: Plugin = {
 /**
  * Export simulator packages to `PackageSources` directory
  */
-const writePackageSources = (logger: BuildLogger, instrumentName: string, imports: string[] = [], isInteractive = true): Plugin => ({
+const writePackageSources = (logger: BuildLogger, packagesName:string, packagesDir: string, instrumentName: string, imports: string[] = [], isInteractive = true): Plugin => ({
     name: 'writePackageSources',
     setup(build) {
         build.onEnd(async (result) => {
@@ -71,14 +71,14 @@ const writePackageSources = (logger: BuildLogger, instrumentName: string, import
                 const packageTarget = path.join(process.env.PACKAGES_DIR, instrumentName);
                 await fs.mkdir(packageTarget, { recursive: true });
 
-                await fs.writeFile(path.join(packageTarget, 'template.html'), htmlTemplate(instrumentName, imports, js, css));
-                await fs.writeFile(path.join(packageTarget, 'template.js'), jsTemplate(instrumentName, isInteractive));
+                await fs.writeFile(path.join(packageTarget, 'template.html'), htmlTemplate(packagesDir, instrumentName, imports, js, css));
+                await fs.writeFile(path.join(packageTarget, 'template.js'), jsTemplate(packagesName, instrumentName, isInteractive));
             }
         });
     },
 });
 
-async function build(instrument: Instrument, logger: BuildLogger, module = false): Promise<BuildResultWithMeta> {
+async function build(conf: MachConfig, instrument: Instrument, logger: BuildLogger, module = false): Promise<BuildResultWithMeta> {
     const configFile = JSON.parse(await fs.readFile(path.join(instrument.directory, 'config.json'), { encoding: 'utf-8' }));
 
     const buildOptions: BuildOptions & { incremental: true, metafile: true } = {
@@ -118,18 +118,18 @@ async function build(instrument: Instrument, logger: BuildLogger, module = false
     }
 
     if (!instrument.skipPackageSources && !module) {
-        buildOptions.plugins!.push(writePackageSources(logger, instrument.name, instrument.imports, configFile.isInteractive));
+        buildOptions.plugins!.push(writePackageSources(logger, conf.packageName, conf.packagesDir, instrument.name, instrument.imports, configFile.isInteractive));
     }
 
     return esbuild.build(buildOptions);
 }
 
-export async function buildInstrument(instrument: Instrument, logger: BuildLogger, module = false): Promise<BuildResultWithMeta> {
+export async function buildInstrument(conf: MachConfig, instrument: Instrument, logger: BuildLogger, module = false): Promise<BuildResultWithMeta> {
     let moduleResults: BuildResultWithMeta[] = [];
 
     // Recursively build included submodules
     if (instrument.modules) {
-        moduleResults = await Promise.all(instrument.modules.map((module) => buildInstrument(module, logger, true)));
+        moduleResults = await Promise.all(instrument.modules.map((module) => buildInstrument(conf, module, logger, true)));
 
         // Skip main instrument bundling if the submodule fails.
         for (const res of moduleResults) {
@@ -142,7 +142,7 @@ export async function buildInstrument(instrument: Instrument, logger: BuildLogge
     }
 
     const startTime = performance.now();
-    const { success, result } = await build(instrument, logger, module)
+    const { success, result } = await build(conf, instrument, logger, module)
         .then((result: BuildResultWithMeta) => ({
             success: true,
             result,
@@ -163,13 +163,13 @@ export async function buildInstrument(instrument: Instrument, logger: BuildLogge
     return result;
 }
 
-export async function watchInstrument(instrument: Instrument, logger: BuildLogger, module = false): Promise<BuildResultWithMeta> {
+export async function watchInstrument(conf: MachConfig, instrument: Instrument, logger: BuildLogger, module = false): Promise<BuildResultWithMeta> {
     // Recursively watch included submodules
     if (instrument.modules) {
-        await Promise.all(instrument.modules.map((module) => watchInstrument(module, logger, true)));
+        await Promise.all(instrument.modules.map((module) => watchInstrument(conf, module, logger, true)));
     }
 
-    let result = await buildInstrument(instrument, logger, module);
+    let result = await buildInstrument(conf, instrument, logger, module);
 
     // Chokidar needs a list of files to watch, but we don't get the metafile on a failed build.
     if (result.errors.length > 0) {

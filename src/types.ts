@@ -33,6 +33,8 @@ export const InstrumentSchema: z.ZodType<Instrument> = z.lazy(() => z.object({
 }));
 
 export interface MachConfig {
+    /** Name of packages for instrument register */
+    packageName: string;
     /** Path to PackageSources directory */
     packagesDir: string;
     /** All instruments to be bundled by Mach */
