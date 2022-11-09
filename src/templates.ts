@@ -41,10 +41,10 @@ export const htmlTemplate = (name: string, imports: string[], js: string, css: s
     </style>
 </script>
 ${imports.map((i) => `<script type="text/html" import-script="${i}" import-async="false"></script>\n`)}
-<script type="text/html" import-script="/Pages/VCockpit/Instruments/a22x/${name}/template.js" import-async="false"></script>
+<script type="text/html" import-script="/Pages/VCockpit/Instruments/${process.env.PACKAGE_NAME}/${name}/template.js" import-async="false"></script>
 `;
 
-export const jsTemplate = (name: string, isInteractive: boolean) => `
+export const jsTemplate = (packageName: string, name: string, isInteractive: boolean) => `
 'use strict';
 /* global BaseInstrument */
 /* global registerInstrument */
@@ -97,5 +97,5 @@ class ${name}_Logic extends BaseInstrument {
         this.dispatchEvent(new CustomEvent('*', { detail: eventName }));
     }
 }
-registerInstrument('a22x-${name.toLowerCase()}', ${name}_Logic);
+registerInstrument('${packageName.toLowerCase()}-${name.toLowerCase()}', ${name}_Logic);
 `;

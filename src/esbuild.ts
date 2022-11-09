@@ -72,7 +72,7 @@ const writePackageSources = (logger: BuildLogger, instrumentName: string, import
                 await fs.mkdir(packageTarget, { recursive: true });
 
                 await fs.writeFile(path.join(packageTarget, 'template.html'), htmlTemplate(instrumentName, imports, js, css));
-                await fs.writeFile(path.join(packageTarget, 'template.js'), jsTemplate(instrumentName, isInteractive));
+                await fs.writeFile(path.join(packageTarget, 'template.js'), jsTemplate(process.env.PACKAGE_NAME, instrumentName, isInteractive));
             }
         });
     },
