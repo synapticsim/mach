@@ -21,7 +21,7 @@
  * OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
  * SOFTWARE.
  */
-export const htmlTemplate = (packagesDir: string, name: string, imports: string[], js: string, css: string) => `
+export const htmlTemplate = (name: string, imports: string[], js: string, css: string) => `
 <script type="text/html" id="${name}_TEMPLATE">
     <div id="MSFS_REACT_MOUNT">
         <h1>If you're seeing this, React didn't load.</h1>
