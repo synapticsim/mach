@@ -3,6 +3,8 @@
  * SPDX-License-Identifier: MIT
  */
 
+import { Plugin } from 'esbuild';
+
 declare global {
     namespace NodeJS {
         interface ProcessEnv {
@@ -11,6 +13,7 @@ declare global {
             OUTPUT_METAFILE: boolean;
             PACKAGE_DIR: string;
             PACKAGE_NAME: string;
+            BUILD_PLUGINS: Plugin[];
         }
     }
 }

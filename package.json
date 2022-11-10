@@ -1,6 +1,6 @@
 {
   "name": "@synaptic-simulations/mach",
-  "version": "1.0.0-rc4",
+  "version": "1.0.0-rc5",
   "description": "The last MSFS instrument bundler you'll ever need.",
   "main": "./dist/index.js",
   "types": "./dist/index.d.ts",
@@ -25,8 +25,6 @@
     "chokidar": "^3.5.3",
     "commander": "^9.4.1",
     "esbuild": "^0.15.13",
-    "esbuild-plugin-inline-image": "^0.0.8",
-    "esbuild-sass-plugin": "^2.4.0",
     "filesize": "^10.0.5",
     "signale": "^1.4.0",
     "zod": "^3.19.1"

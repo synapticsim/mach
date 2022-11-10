@@ -3,7 +3,7 @@
  * SPDX-License-Identifier: MIT
  */
 
-import { BuildIncremental, Metafile } from 'esbuild';
+import { BuildIncremental, Metafile, Plugin } from 'esbuild';
 import { z } from 'zod';
 
 export type BuildResultWithMeta = BuildIncremental & { metafile: Metafile };
@@ -44,6 +44,8 @@ export interface MachConfig {
     packageName: string;
     /** Path to PackageSources directory. */
     packageDir: string;
+    /** esbuild plugins to include (https://github.com/esbuild/community-plugins) */
+    plugins?: Plugin[];
     /** All instruments to be bundled by Mach. */
     instruments: Instrument[];
 }
@@ -51,5 +53,9 @@ export interface MachConfig {
 export const MachConfigSchema = z.object({
     packageName: z.string(),
     packageDir: z.string(),
+    plugins: z.optional(z.array(z.object({
+        name: z.string(),
+        setup: z.function(),
+    }))),
     instruments: z.array(InstrumentSchema),
 });

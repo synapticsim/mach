@@ -46,9 +46,13 @@ This function has the same behavior as the [`mach watch [options]`](#mach-watch-
 Whether you supply the configuration with the `mach.config.js` file to the CLI or with a JavaScript object to the API, the structure is identical.
 ```ts
 interface MachConfig {
-    /** Path to PackageSources directory */
-    packagesDir: string;
-    /** All instruments to be bundled by Mach */
+    /** Name of package, used for bundling simulator packages. */
+    packageName: string;
+    /** Path to PackageSources directory. */
+    packageDir: string;
+    /** esbuild plugins to include (https://github.com/esbuild/community-plugins) */
+    plugins?: Plugin[];
+    /** All instruments to be bundled by Mach. */
     instruments: Instrument[];
 }
 
@@ -60,24 +64,27 @@ interface Instrument {
     /** Entrypoint filename for instrument. Defaults to `index` value in instrument `config.json`. */
     input?: string;
 
-    /** Imports to include in simulator export. */
+    /** Imports to include in simulator package. */
     imports?: string[];
-    /** Alows skipping simulator export */
+    /** Skip writing simulator package. */
     skipPackageSources?: boolean;
 
     /** Instruments to import as ESM modules. */
     modules?: Instrument[];
-    /** Required for modules. Import to resolve to the bundled module. */
-    import?: string;
+    /** (Required for instruments included as `modules`) Import name to resolve to the bundled module. */
+    resolve?: string;
 }
 ```
 
 ### Example
 ```js
+const imageInline = require('esbuild-plugin-inline-image');
+
 /** @type { import('@synaptic-simulations/mach').MachConfig } */
 module.exports = {
     packageName: 'a22x',
     packageDir: 'PackageSources',
+    plugins: [imageInline({ limit: -1 })],
     instruments: [
         {
             name: 'DisplayUnits',
