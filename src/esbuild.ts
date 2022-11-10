@@ -24,10 +24,10 @@ async function build(config: MachConfig, instrument: Instrument, logger: BuildLo
         logLevel: 'silent',
         incremental: true,
         metafile: true,
-        plugins: config.plugins,
+        plugins: config.plugins ? [...config.plugins] : [],
         define: {
             'process.env.MODULE': module.toString(),
-            'process.env.NODE_ENV': `"${process.env.NODE_ENV}"`,
+            'process.env.NODE_ENV': `"${process.env.NODE_ENV ?? 'production'}"`,
         },
     };
 
