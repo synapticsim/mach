@@ -1,3 +1,8 @@
+/*
+ * SPDX-FileCopyrightText: 2022 Synaptic Simulations and its contributors
+ * SPDX-License-Identifier: MIT
+ */
+
 import esbuild, { BuildIncremental, BuildOptions, Plugin } from 'esbuild';
 import imageInline from 'esbuild-plugin-inline-image';
 import { sassPlugin } from 'esbuild-sass-plugin';

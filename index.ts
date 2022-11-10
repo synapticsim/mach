@@ -1,4 +1,10 @@
 #! /usr/bin/env node
+
+/*
+ * SPDX-FileCopyrightText: 2022 Synaptic Simulations and its contributors
+ * SPDX-License-Identifier: MIT
+ */
+
 import { Command } from 'commander';
 import signale from 'signale';
 import chalk from 'chalk';

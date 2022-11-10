@@ -1,3 +1,8 @@
+/*
+ * SPDX-FileCopyrightText: 2022 Synaptic Simulations and its contributors
+ * SPDX-License-Identifier: MIT
+ */
+
 /* eslint no-console: 0 */
 import signale, { DefaultMethods, Signale } from 'signale';
 import { filesize } from 'filesize';

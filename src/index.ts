@@ -1,3 +1,8 @@
+/*
+ * SPDX-FileCopyrightText: 2022 Synaptic Simulations and its contributors
+ * SPDX-License-Identifier: MIT
+ */
+
 import path from 'path';
 import signale from 'signale';
 import chalk from 'chalk';

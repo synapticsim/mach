@@ -1,3 +1,8 @@
+/*
+ * SPDX-FileCopyrightText: 2022 Synaptic Simulations and its contributors
+ * SPDX-License-Identifier: MIT
+ */
+
 // TODO: Unified .eslintrc.js for all Synaptic projects
 module.exports = {
     root: true,
