@@ -68,11 +68,11 @@ const writePackageSources = (logger: BuildLogger, instrumentName: string, import
                 const js = await fs.readFile(jsPath, { encoding: 'utf-8' });
                 const css = await fs.readFile(cssPath, { encoding: 'utf-8' });
 
-                const packageTarget = path.join(process.env.PACKAGES_DIR, instrumentName);
+                const packageTarget = path.join(process.env.PACKAGE_DIR, 'html_ui/Pages/VCockpit/Instruments', process.env.PACKAGE_NAME, instrumentName);
                 await fs.mkdir(packageTarget, { recursive: true });
 
                 await fs.writeFile(path.join(packageTarget, 'template.html'), htmlTemplate(instrumentName, imports, js, css));
-                await fs.writeFile(path.join(packageTarget, 'template.js'), jsTemplate(process.env.PACKAGE_NAME, instrumentName, isInteractive));
+                await fs.writeFile(path.join(packageTarget, 'template.js'), jsTemplate(instrumentName, isInteractive));
             }
         });
     },
@@ -107,7 +107,7 @@ async function build(instrument: Instrument, logger: BuildLogger, module = false
         buildOptions.plugins!.push(
             resolve(Object.fromEntries(
                 instrument.modules.map((mod) => [
-                    mod.import,
+                    mod.resolve,
                     path.join(process.env.BUNDLES_DIR, mod.name, '/module/module.mjs'),
                 ]),
             )),

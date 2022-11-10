@@ -3,9 +3,9 @@ declare global {
         interface ProcessEnv {
             CONFIG_PATH: string;
             BUNDLES_DIR: string;
-            PACKAGES_DIR: string;
-            PACKAGE_NAME: string;
             OUTPUT_METAFILE: boolean;
+            PACKAGE_DIR: string;
+            PACKAGE_NAME: string;
         }
     }
 }

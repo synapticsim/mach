@@ -21,6 +21,7 @@
  * OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
  * SOFTWARE.
  */
+
 export const htmlTemplate = (name: string, imports: string[], js: string, css: string) => `
 <script type="text/html" id="${name}_TEMPLATE">
     <div id="MSFS_REACT_MOUNT">
@@ -44,7 +45,7 @@ ${imports.map((i) => `<script type="text/html" import-script="${i}" import-async
 <script type="text/html" import-script="/Pages/VCockpit/Instruments/${process.env.PACKAGE_NAME}/${name}/template.js" import-async="false"></script>
 `;
 
-export const jsTemplate = (packageName: string, name: string, isInteractive: boolean) => `
+export const jsTemplate = (name: string, isInteractive: boolean) => `
 'use strict';
 /* global BaseInstrument */
 /* global registerInstrument */
@@ -97,5 +98,5 @@ class ${name}_Logic extends BaseInstrument {
         this.dispatchEvent(new CustomEvent('*', { detail: eventName }));
     }
 }
-registerInstrument('${packageName.toLowerCase()}-${name.toLowerCase()}', ${name}_Logic);
+registerInstrument('${process.env.PACKAGE_NAME.toLowerCase()}-${name.toLowerCase()}', ${name}_Logic);
 `;

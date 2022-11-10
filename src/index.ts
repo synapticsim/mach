@@ -6,11 +6,12 @@ import { BuildLogger } from './logger';
 import { MachConfig } from './types';
 
 function configureEnvironment(conf: MachConfig) {
-    process.env.CONFIG_PATH = process.env.CONFIG_PATH ?? path.join(process.cwd(), 'mach.config.json');
+    process.env.CONFIG_PATH = process.env.CONFIG_PATH ?? path.join(process.cwd(), 'mach.config.js');
     process.env.BUNDLES_DIR = process.env.BUNDLES_DIR ?? path.join(process.cwd(), 'bundles');
-    process.env.PACKAGES_DIR = process.env.PACKAGES_DIR ?? path.join(process.cwd(), conf.packagesDir);
-    process.env.PACKAGE_NAME = process.env.PACKAGE_NAME ?? conf.packageName;
     process.env.OUTPUT_METAFILE = process.env.OUTPUT_METAFILE ?? false;
+
+    process.env.PACKAGE_NAME = conf.packageName;
+    process.env.PACKAGE_DIR = path.join(process.cwd(), conf.packageDir);
 }
 
 export async function machBuild(conf: MachConfig, filter?: RegExp) {

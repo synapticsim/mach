@@ -3,15 +3,21 @@ import { Command } from 'commander';
 import signale from 'signale';
 import chalk from 'chalk';
 import path from 'path';
-import fs from 'fs/promises';
 import { description, version } from './package.json';
 import { machBuild, machWatch } from './src';
-import { MachConfigSchema, ParsedCommandArgs } from './src/types';
+import { MachConfig, MachConfigSchema } from './src/types';
+
+interface ParsedCommandArgs {
+    config: MachConfig;
+    bundles: string;
+    out: string;
+    filter?: RegExp;
+}
 
 const cli = new Command();
 
 const commandWithOptions = (name: string) => cli.command(name)
-    .option('-c, --config <filename>', 'specify path to configuration file', './mach.config.json')
+    .option('-c, --config <filename>', 'specify path to configuration file', './mach.config.js')
     .option('-b, --bundles <directory>', 'bundles output directory', './bundles')
     .option('-f, --filter <regex>', 'regex filter of included instrument names')
     .option('--output-metafile', 'output `build_meta.json` file to bundles directory')
@@ -25,23 +31,22 @@ const commandWithOptions = (name: string) => cli.command(name)
         actionCommand.setOptionValue('filter', new RegExp(actionCommand.getOptionValue('filter')));
 
         // Load config
-        const rawConf = await fs.readFile(process.env.CONFIG_PATH, { encoding: 'utf-8' })
-            .then((res) => res)
+        await import(process.env.CONFIG_PATH.replace(/\\/g, '/'))
+            .then((module) => {
+                // Check config integrity
+                const result = MachConfigSchema.safeParse(module.default);
+                if (result.success) {
+                    actionCommand.setOptionValue('config', result.data);
+                    signale.info('Loaded config file', chalk.cyanBright(process.env.CONFIG_PATH), '\n');
+                } else {
+                    signale.error('Invalid config file', chalk.redBright(process.env.CONFIG_PATH));
+                    process.exit(1);
+                }
+            })
             .catch(() => {
-                signale.error('Failed to read config file', chalk.redBright(process.env.CONFIG_PATH));
+                signale.error('Unable to load config file', chalk.redBright(process.env.CONFIG_PATH));
                 process.exit(1);
             });
-
-        // Parse and check config integrity
-        try {
-            const conf = MachConfigSchema.parse(JSON.parse(rawConf));
-            // Overwrite config with parsed data
-            actionCommand.setOptionValue('config', conf);
-            signale.info('Loaded config file', chalk.cyanBright(process.env.CONFIG_PATH), '\n');
-        } catch (error) {
-            signale.error('Invalid config file', chalk.redBright(process.env.CONFIG_PATH));
-            process.exit(1);
-        }
     });
 
 cli

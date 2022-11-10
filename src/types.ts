@@ -1,6 +1,8 @@
 import { BuildIncremental, Metafile } from 'esbuild';
 import { z } from 'zod';
 
+export type BuildResultWithMeta = BuildIncremental & { metafile: Metafile };
+
 export interface Instrument {
     /** Instrument name, used as directory name for bundles and packages. */
     name: string;
@@ -9,15 +11,15 @@ export interface Instrument {
     /** Entrypoint filename for instrument. Defaults to `index` value in instrument `config.json`. */
     input?: string;
 
-    /** Imports to include in simulator export. */
+    /** Imports to include in simulator package. */
     imports?: string[];
-    /** Alows skipping simulator export */
+    /** Skip writing simulator package. */
     skipPackageSources?: boolean;
 
     /** Instruments to import as ESM modules. */
     modules?: Instrument[];
-    /** Required for modules. Import to resolve to the bundled module. */
-    import?: string;
+    /** (Required for instruments included as `modules`) Import name to resolve to the bundled module. */
+    resolve?: string;
 }
 
 export const InstrumentSchema: z.ZodType<Instrument> = z.lazy(() => z.object({
@@ -29,28 +31,20 @@ export const InstrumentSchema: z.ZodType<Instrument> = z.lazy(() => z.object({
     skipPackageSources: z.optional(z.boolean()),
 
     modules: z.optional(z.array(InstrumentSchema)),
-    import: z.optional(z.string()),
+    resolve: z.optional(z.string()),
 }));
 
 export interface MachConfig {
-    /** Name of packages for instrument register */
+    /** Name of package, used for bundling simulator packages. */
     packageName: string;
-    /** Path to PackageSources directory */
-    packagesDir: string;
-    /** All instruments to be bundled by Mach */
+    /** Path to PackageSources directory. */
+    packageDir: string;
+    /** All instruments to be bundled by Mach. */
     instruments: Instrument[];
 }
 
 export const MachConfigSchema = z.object({
-    packagesDir: z.string(),
+    packageName: z.string(),
+    packageDir: z.string(),
     instruments: z.array(InstrumentSchema),
 });
-
-export interface ParsedCommandArgs {
-    config: MachConfig;
-    bundles: string;
-    out: string;
-    filter?: RegExp;
-}
-
-export type BuildResultWithMeta = BuildIncremental & { metafile: Metafile };

@@ -43,7 +43,7 @@ This function has the same behavior as the [`mach watch [options]`](#mach-watch-
 
 ## Configuration
 
-Whether you supply the configuration with the `mach.config.json` file to the CLI or with a JavaScript object to the API, the structure is identical.
+Whether you supply the configuration with the `mach.config.js` file to the CLI or with a JavaScript object to the API, the structure is identical.
 ```ts
 interface MachConfig {
     /** Path to PackageSources directory */
@@ -73,27 +73,39 @@ interface Instrument {
 ```
 
 ### Example
-```
-{
-    "packageName": "a22x",
-    "packagesDir": "PackageSources/html_ui/Pages/VCockpit/Instruments/a22x",
-    "instruments": [
+```js
+/** @type { import('@synaptic-simulations/mach').MachConfig } */
+module.exports = {
+    packageName: 'a22x',
+    packageDir: 'PackageSources',
+    instruments: [
         {
-            "name": "DisplayUnits",
-            "directory": "src/instruments/src/DisplayUnits",
-            "imports": ["/JS/dataStorage.js"],
+            name: 'DisplayUnits',
+            directory: 'src/instruments/src/DisplayUnits',
+            imports: ['/JS/dataStorage.js'],
+            modules: [{
+                name: 'PFD',
+                resolve: '@instruments/PFD',
+                directory: 'src/instruments/src/PFD',
+            }],
         },
         {
-            "name": "CTP",
-            "directory": "src/instruments/src/CTP",
-            "imports": ["/JS/dataStorage.js"]
+            name: 'CTP',
+            directory: 'src/instruments/src/CTP',
+            imports: ['/JS/dataStorage.js'],
         },
         {
-            "name": "ISI",
-            "directory": "src/instruments/src/ISI"
-        }
-    ]
-}
+            name: 'ISI',
+            directory: 'src/instruments/src/ISI',
+        },
+        // Separate bundle for ACE, does not get exported to package directory.
+        {
+            name: 'PFD',
+            directory: 'src/instruments/src/PFD',
+            skipPackageSources: true,
+        },
+    ],
+};
 ```
 
 
