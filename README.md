@@ -32,11 +32,11 @@ The `watch` command will first build each instrument in the configuration, and t
 
 ### JavaScript
 
-#### `async function machBuild(conf: MetaConfig, filter?: RegExp)`
+#### `async function machBuild(conf: MachConfig, filter?: RegExp)`
 
 This function has the same behavior as the [`mach build [options]`](#mach-build-options) CLI command.
 
-#### `async function machWatch(conf: MetaConfig, filter?: RegExp)`
+#### `async function machWatch(conf: MachConfig, filter?: RegExp)`
 
 This function has the same behavior as the [`mach watch [options]`](#mach-watch-options) CLI command.
 
