@@ -16,7 +16,7 @@ Mach also allows you to create nested instruments, enabling you to bundle MSFS A
 
 #### Options
 
-- `-c, --config <filename>` specify path to configuration file (default: `./mach.config.json`)
+- `-c, --config <filename>` specify path to configuration file (default: `./mach.config.js`)
 - `-b, --bundles <dirname>` bundles output directory (default: `./bundles`)
 - `-f, --filter <regex>` regex filter of included instrument names
 - `--output-metafile` output `build_meta.json` file to bundles directory
