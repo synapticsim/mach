@@ -8,12 +8,14 @@ declare global {
         interface ProcessEnv {
             PACKAGE_DIR: string;
             PACKAGE_NAME: string;
+            MINIFY_BUNDLES: string;
             SKIP_SIM_PACKAGE: string;
             WARNINGS_ERROR: string;
             CONFIG_PATH: string;
             BUNDLES_DIR: string;
             VERBOSE_OUTPUT: string;
             OUTPUT_METAFILE: string;
+            OUTPUT_SOURCEMAPS: string;
         }
     }
 }

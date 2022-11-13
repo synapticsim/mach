@@ -34,11 +34,13 @@ const cli = new Command();
 
 const commandWithOptions = (name: string) => cli.command(name)
     .option('-c, --config <filename>', 'specify path to configuration file', './mach.config.js')
-    .option('-b, --bundles <directory>', 'bundles output directory', './bundles')
+    .option('-b, --bundles <dirname>', 'bundles output directory', './bundles')
     .option('-e, --werror', 'makes all warnings into errors')
     .option('-f, --filter <regex>', 'regex filter of included instrument names')
-    .option('-m, --output-metafile', 'output `build_meta.json` file to bundles directory')
+    .option('-m, --minify', 'minify bundle code')
     .option('-s, --skip-simulator-package', 'skips writing simulator package templates')
+    .option('-t, --output-metafile', 'output `build_meta.json` file to bundles directory')
+    .option('-u, --output-sourcemaps', 'append sourcemaps to the end of bundle files')
     .option('-v, --verbose', 'output additional build information')
     .hook('preAction', async (thisCommand, actionCommand) => {
         signale.info(`Welcome to ${chalk.cyanBright('Mach')}, v${version}`);
@@ -46,9 +48,11 @@ const commandWithOptions = (name: string) => cli.command(name)
         process.env.CONFIG_PATH = path.join(process.cwd(), actionCommand.getOptionValue('config'));
         process.env.BUNDLES_DIR = path.join(process.cwd(), actionCommand.getOptionValue('bundles'));
         process.env.WARNINGS_ERROR = actionCommand.getOptionValue('werror') ?? false;
-        process.env.OUTPUT_METAFILE = actionCommand.getOptionValue('outputMetafile') ?? false;
+        process.env.MINIFY_BUNDLES = actionCommand.getOptionValue('minify') ?? false;
         process.env.SKIP_SIM_PACKAGE = actionCommand.getOptionValue('skipSimulatorPackage') ?? false;
         process.env.VERBOSE_OUTPUT = actionCommand.getOptionValue('verbose') ?? false;
+        process.env.OUTPUT_METAFILE = actionCommand.getOptionValue('outputMetafile') ?? false;
+        process.env.OUTPUT_SOURCEMAPS = actionCommand.getOptionValue('outputSourcemaps') ?? false;
 
         actionCommand.setOptionValue('filter', new RegExp(actionCommand.getOptionValue('filter')));
 

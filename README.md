@@ -18,10 +18,13 @@ Mach also allows you to create nested instruments, enabling you to bundle MSFS A
 
 - `-c, --config <filename>` specify path to configuration file (default: `./mach.config.js`)
 - `-b, --bundles <dirname>` bundles output directory (default: `./bundles`)
+- `-e, --werror` makes all warnings into errors
 - `-f, --filter <regex>` regex filter of included instrument names
-- `-v, --verbose` output additional build information
-- `-m, --output-metafile` output `build_meta.json` file to bundles directory
+- `-m, --minify` minify bundle code
 - `-s, --skip-simulator-package` skips writing simulator package templates
+- `-t, --output-metafile` output `build_meta.json` file to bundles directory
+- `-u, --output-sourcemaps` append sourcemaps to the end of bundle files
+- `-v, --verbose` output additional build information
 
 #### `mach build [options]`
 

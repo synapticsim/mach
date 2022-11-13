@@ -39,7 +39,7 @@ export async function machBuild(conf: MachConfig, filter?: RegExp) {
         if (successCount > 0) {
             signale.success(
                 `Built ${results.filter((res) => res.errors.length === 0).length} instruments in`,
-                chalk.greenBright(`${(stopTime - startTime).toFixed()}ms`),
+                chalk.greenBright(`${(stopTime - startTime).toFixed()} ms`),
                 '\n',
             );
         } else {
