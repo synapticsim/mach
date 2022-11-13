@@ -14,7 +14,12 @@ async function build(config: MachConfig, instrument: Instrument, logger: BuildLo
     const envVars = Object.fromEntries(
         Object.entries(process.env)
             .filter(([key]) => /^[A-Za-z_]*$/.test(key))
-            .map(([key, value]) => [`process.env.${key}`, `"${value?.replace(/\\/g, '/') ?? ''}"`]),
+            .map(([key, value]) => ([
+                `process.env.${key}`,
+                value?.toLowerCase() === 'true' || value?.toLowerCase() === 'false'
+                    ? value.toLowerCase()
+                    : `"${value?.replace(/\\/g, '/') ?? ''}"`,
+            ])),
     );
 
     const buildOptions: BuildOptions & { incremental: true, metafile: true } = {
