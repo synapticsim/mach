@@ -5,6 +5,7 @@
  * SPDX-License-Identifier: MIT
  */
 
+import dotenv from 'dotenv';
 import { Command } from 'commander';
 import signale from 'signale';
 import chalk from 'chalk';
@@ -12,6 +13,8 @@ import path from 'path';
 import { description, version } from './package.json';
 import { machBuild, machWatch } from './src';
 import { MachConfig, MachConfigSchema } from './src/types';
+
+dotenv.config();
 
 interface ParsedCommandArgs {
     config: MachConfig;
