@@ -45,6 +45,9 @@ export async function machBuild(conf: MachConfig, filter?: RegExp) {
         } else {
             signale.error(`All ${instruments.length} instruments failed to build`);
         }
+        if (successCount < instruments.length) {
+            process.exit(1);
+        }
     });
 }
 

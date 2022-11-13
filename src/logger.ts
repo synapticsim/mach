@@ -44,8 +44,15 @@ export class BuildLogger {
         console.log();
         if (result.warnings.length > 0) {
             for (const warning of result.warnings) {
-                this.logger.errorMessage(chalk.yellowBright(warning.text));
-                this.logger.errorLocation(`at ${warning.location?.file}:${warning.location?.line}:${warning.location?.column}\n`);
+                this.logger.errorMessage(chalk.yellowBright(`${warning.text} (${warning.id})`));
+                this.logger.errorLocation(`at ${warning.location?.file}:${warning.location?.line}:${warning.location?.column}`);
+                if (warning.notes.length > 0) {
+                    for (const note of warning.notes) {
+                        this.logger.errorMessage(chalk.whiteBright(note.text));
+                        this.logger.errorLocation(`at ${warning.location?.file}:${warning.location?.line}:${warning.location?.column}`);
+                    }
+                }
+                console.log();
             }
         }
     }
@@ -53,8 +60,15 @@ export class BuildLogger {
     buildFailed(errors: Message[]) {
         this.logger.error(`Build failed — ${chalk.redBright(errors.length, errors.length === 1 ? 'error' : 'errors')}\n`);
         for (const error of errors) {
-            this.logger.errorMessage(chalk.redBright(error.text));
-            this.logger.errorLocation(`at ${error.location?.file}:${error.location?.line}:${error.location?.column}\n`);
+            this.logger.errorMessage(chalk.redBright(`${error.text} (${error.id})`));
+            this.logger.errorLocation(`at ${error.location?.file}:${error.location?.line}:${error.location?.column}`);
+            if (error.notes.length > 0) {
+                for (const note of error.notes) {
+                    this.logger.errorMessage(chalk.whiteBright(note.text));
+                    this.logger.errorLocation(`at ${error.location?.file}:${error.location?.line}:${error.location?.column}`);
+                }
+            }
+            console.log();
         }
     }
 

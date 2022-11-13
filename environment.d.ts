@@ -6,11 +6,14 @@
 declare global {
     namespace NodeJS {
         interface ProcessEnv {
-            CONFIG_PATH: string;
-            BUNDLES_DIR: string;
-            OUTPUT_METAFILE: string;
             PACKAGE_DIR: string;
             PACKAGE_NAME: string;
+            SKIP_SIM_PACKAGE: string;
+            WARNINGS_ERROR: string;
+            CONFIG_PATH: string;
+            BUNDLES_DIR: string;
+            VERBOSE_OUTPUT: string;
+            OUTPUT_METAFILE: string;
         }
     }
 }

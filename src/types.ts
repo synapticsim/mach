@@ -3,7 +3,7 @@
  * SPDX-License-Identifier: MIT
  */
 
-import { BuildIncremental, Metafile, Plugin } from 'esbuild';
+import { BuildIncremental, LogLevel, Metafile, Plugin } from 'esbuild';
 import { z } from 'zod';
 
 export type BuildResultWithMeta = BuildIncremental & { metafile: Metafile };
@@ -105,3 +105,51 @@ export const MachConfigSchema = z.object({
     })).optional(),
     instruments: z.array(InstrumentSchema),
 });
+
+const ESBUILD_WARNINGS = [
+    'assign-to-constant',
+    'assign-to-import',
+    'call-import-namespace',
+    'commonjs-variable-in-esm',
+    'delete-super-property',
+    'duplicate-case',
+    'duplicate-object-key',
+    'empty-import-meta',
+    'equals-nan',
+    'equals-negative-zero',
+    'equals-new-object',
+    'html-comment-in-js',
+    'impossible-typeof',
+    'private-name-will-throw',
+    'semicolon-after-return',
+    'suspicious-boolean-not',
+    'this-is-undefined-in-esm',
+    'unsupported-dynamic-import',
+    'unsupported-jsx-comment',
+    'unsupported-regexp',
+    'unsupported-require-call',
+    'css-syntax-error',
+    'invalid-@charset',
+    'invalid-@import',
+    'invalid-@nest',
+    'invalid-@layer',
+    'invalid-calc',
+    'js-comment-in-css',
+    'unsupported-@charset',
+    'unsupported-@namespace',
+    'unsupported-css-property',
+    'ambiguous-reexport',
+    'different-path-case',
+    'ignored-bare-import',
+    'ignored-dynamic-import',
+    'import-is-undefined',
+    'require-resolve-not-external',
+    'invalid-source-mappings',
+    'sections-in-source-map',
+    'missing-source-map',
+    'unsupported-source-map-comment',
+    'package.json',
+    'tsconfig.json',
+];
+
+export const ESBUILD_ERRORS: Record<string, LogLevel> = Object.fromEntries(ESBUILD_WARNINGS.map((warning) => ([warning, 'error'])));

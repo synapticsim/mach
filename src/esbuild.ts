@@ -6,9 +6,9 @@
 import esbuild, { BuildIncremental, BuildOptions } from 'esbuild';
 import chokidar from 'chokidar';
 import path from 'path';
-import { BuildResultWithMeta, Instrument, MachConfig } from './types';
 import { BuildLogger } from './logger';
 import { includeCSS, resolve, writeMetafile, writePackageSources } from './plugins';
+import { BuildResultWithMeta, ESBUILD_ERRORS, Instrument, MachConfig } from './types';
 
 async function build(config: MachConfig, instrument: Instrument, logger: BuildLogger, module = false): Promise<BuildResultWithMeta> {
     const envVars = Object.fromEntries(
@@ -30,9 +30,10 @@ async function build(config: MachConfig, instrument: Instrument, logger: BuildLo
         target: 'es2017',
         format: (module ? 'esm' : 'iife'),
         logLevel: 'silent',
+        logOverride: process.env.WARNINGS_ERROR === 'true' ? ESBUILD_ERRORS : undefined,
         incremental: true,
         metafile: true,
-        plugins: config.plugins ? [...config.plugins] : [],
+        plugins: [...(config.plugins ?? [])],
         define: {
             ...envVars,
             'process.env.MODULE': module.toString(),
