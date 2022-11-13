@@ -45,34 +45,65 @@ This function has the same behavior as the [`mach watch [options]`](#mach-watch-
 
 Whether you supply the configuration with the `mach.config.js` file to the CLI or with a JavaScript object to the API, the structure is identical.
 ```ts
-interface MachConfig {
-    /** Name of package, used for bundling simulator packages. */
-    packageName: string;
-    /** Path to PackageSources directory. */
-    packageDir: string;
-    /** esbuild plugins to include (https://github.com/esbuild/community-plugins) */
-    plugins?: Plugin[];
-    /** All instruments to be bundled by Mach. */
-    instruments: Instrument[];
+interface PackageSettings {
+    /**
+     * Specifies type of instrument.
+     * - `React` instruments will be created with a `BaseInstrument` harness that exposes an `MSFS_REACT_MOUNT` element for mounting.
+     * - `BaseInstrument` instruments must specify the `instrumentId` and `mountElementId` to match the instrument configuration.
+     */
+    type: string;
+    /** Final template filename. Defaults to `template` */
+    fileName?: string;
+    /** Simulator packages to import in the HTML template. */
+    imports?: string[];
+}
+
+interface ReactInstrumentPackageSettings extends PackageSettings {
+    type: 'react';
+    /** Optional parameter to specify template ID. Defaults to `Instrument.name`. */
+    templateId?: string;
+    /** Whether the instrument is interactive or not. Defaults to `true`. */
+    isInteractive?: boolean;
+}
+
+interface BaseInstrumentPackageSettings extends PackageSettings {
+    type: 'baseInstrument';
+    /**
+     * Required for `BaseInstrument` instruments.
+     * This value must match the return value from the `BaseInstrument.templateID()` function.
+     * */
+    templateId: string;
+    /**
+     * Required for `BaseInstrument` instruments.
+     * This value must match the ID in your call to `FSComponent.render()`..
+     */
+    mountElementId: string;
 }
 
 interface Instrument {
     /** Instrument name, used as directory name for bundles and packages. */
     name: string;
-    /** Path to directory containing instrument `config.json`. */
-    directory: string;
-    /** Entrypoint filename for instrument. Defaults to `index` value in instrument `config.json`. */
-    input?: string;
+    /** Entrypoint filename for instrument. */
+    index: string;
 
-    /** Imports to include in simulator package. */
-    imports?: string[];
-    /** Skip writing simulator package. */
-    skipPackageSources?: boolean;
+    /** When passed a configuration object, enables a simulator package export. */
+    simulatorPackage?: ReactInstrumentPackageSettings | BaseInstrumentPackageSettings;
 
     /** Instruments to import as ESM modules. */
     modules?: Instrument[];
     /** (Required for instruments included as `modules`) Import name to resolve to the bundled module. */
     resolve?: string;
+}
+
+interface MachConfig {
+    /** Name of package, used for bundling simulator packages. */
+    packageName: string;
+    /** Path to directory containing `html_ui`. */
+    packageDir: string;
+    /** esbuild plugins to include (<https://github.com/esbuild/community-plugins>) */
+    plugins?: Plugin[];
+    /** All instruments to be bundled by Mach. */
+    instruments: Instrument[];
 }
 ```
 
@@ -88,28 +119,32 @@ module.exports = {
     instruments: [
         {
             name: 'DisplayUnits',
-            directory: 'src/instruments/src/DisplayUnits',
-            imports: ['/JS/dataStorage.js'],
+            index: 'src/instruments/src/DisplayUnits/index.tsx',
+            simulatorPackage: {
+                type: 'react',
+                imports: ['/JS/dataStorage.js'],
+            },
             modules: [{
                 name: 'PFD',
                 resolve: '@instruments/PFD',
-                directory: 'src/instruments/src/PFD',
+                index: 'src/instruments/src/PFD/index.tsx',
             }],
         },
         {
             name: 'CTP',
-            directory: 'src/instruments/src/CTP',
-            imports: ['/JS/dataStorage.js'],
+            index: 'src/instruments/src/CTP/index.tsx',
+            simulatorPackage: {
+                type: 'react',
+                imports: ['/JS/dataStorage.js'],
+            },
         },
         {
             name: 'ISI',
-            directory: 'src/instruments/src/ISI',
-        },
-        // Separate bundle for ACE, does not get exported to package directory.
-        {
-            name: 'PFD',
-            directory: 'src/instruments/src/PFD',
-            skipPackageSources: true,
+            index: 'src/instruments/src/ISI/index.tsx',
+            simulatorPackage: {
+                type: 'react',
+                imports: ['/JS/dataStorage.js'],
+            },
         },
     ],
 };
