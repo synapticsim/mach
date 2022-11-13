@@ -36,8 +36,10 @@ export class BuildLogger {
         } else {
             this.logger.success(`Built ${name} in ${chalk.greenBright((time).toFixed(), 'ms')}`);
         }
-        for (const [file, meta] of Object.entries(result.metafile.outputs)) {
-            this.logger.file(chalk.gray(`${file} — ${chalk.cyan(filesize(meta.bytes))}`));
+        if (process.env.VERBOSE_OUTPUT) {
+            for (const [file, meta] of Object.entries(result.metafile.outputs)) {
+                this.logger.file(chalk.gray(`${file} — ${chalk.cyan(filesize(meta.bytes))}`));
+            }
         }
         console.log();
         if (result.warnings.length > 0) {

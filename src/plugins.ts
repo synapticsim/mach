@@ -46,7 +46,7 @@ export const writeMetafile: Plugin = {
     name: 'writeMetafile',
     setup(build) {
         build.onEnd((result) => {
-            if (result.errors.length === 0) {
+            if (process.env.OUTPUT_METAFILE && result.errors.length === 0) {
                 fs.writeFile(
                     path.join(path.dirname(build.initialOptions.outfile!), 'build_meta.json'),
                     JSON.stringify(result.metafile),

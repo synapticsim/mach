@@ -18,6 +18,8 @@ interface ParsedCommandArgs {
     bundles: string;
     out: string;
     filter?: RegExp;
+    verbose?: boolean;
+    outputMetafile?: boolean;
 }
 
 const cli = new Command();
@@ -26,13 +28,15 @@ const commandWithOptions = (name: string) => cli.command(name)
     .option('-c, --config <filename>', 'specify path to configuration file', './mach.config.js')
     .option('-b, --bundles <directory>', 'bundles output directory', './bundles')
     .option('-f, --filter <regex>', 'regex filter of included instrument names')
-    .option('--output-metafile', 'output `build_meta.json` file to bundles directory')
+    .option('-v', '--verbose', 'output additional build information')
+    .option('-m', '--output-metafile', 'output `build_meta.json` file to bundles directory')
     .hook('preAction', async (thisCommand, actionCommand) => {
         signale.info(`Welcome to ${chalk.cyanBright('Mach')}, v${version}`);
 
         process.env.CONFIG_PATH = path.join(process.cwd(), actionCommand.getOptionValue('config'));
         process.env.BUNDLES_DIR = path.join(process.cwd(), actionCommand.getOptionValue('bundles'));
-        process.env.OUTPUT_METAFILE = actionCommand.getOptionValue('outputMetafile');
+        process.env.VERBOSE_OUTPUT = actionCommand.getOptionValue('verbose') ?? false;
+        process.env.OUTPUT_METAFILE = actionCommand.getOptionValue('outputMetafile') ?? false;
 
         actionCommand.setOptionValue('filter', new RegExp(actionCommand.getOptionValue('filter')));
 

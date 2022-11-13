@@ -24,7 +24,7 @@ export async function machBuild(conf: MachConfig, filter?: RegExp) {
 
     const instruments = conf.instruments.filter((instrument) => filter?.test(instrument.name) ?? true);
 
-    signale.start(`Bundling ${instruments.length} instruments\n`);
+    signale.start(`Building ${instruments.length} instruments\n`);
 
     const startTime = performance.now();
     Promise.all(
@@ -35,11 +35,16 @@ export async function machBuild(conf: MachConfig, filter?: RegExp) {
         }),
     ).then((results) => {
         const stopTime = performance.now();
-        signale.success(
-            `Bundled ${results.filter((res) => res.errors.length === 0).length} instruments in`,
-            chalk.greenBright(`${(stopTime - startTime).toFixed()}ms`),
-            '\n',
-        );
+        const successCount = results.filter((res) => res.errors.length === 0).length;
+        if (successCount > 0) {
+            signale.success(
+                `Built ${results.filter((res) => res.errors.length === 0).length} instruments in`,
+                chalk.greenBright(`${(stopTime - startTime).toFixed()}ms`),
+                '\n',
+            );
+        } else {
+            signale.error(`All ${instruments.length} instruments failed to build`);
+        }
     });
 }
 
