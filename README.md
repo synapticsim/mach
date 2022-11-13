@@ -95,6 +95,9 @@ interface Instrument {
     modules?: Instrument[];
     /** (Required for instruments included as `modules`) Import name to resolve to the bundled module. */
     resolve?: string;
+
+    /** esbuild plugins to include for only this instrument (<https://github.com/esbuild/community-plugins>) */
+    plugins?: Plugin[];
 }
 
 interface MachConfig {
@@ -102,7 +105,7 @@ interface MachConfig {
     packageName: string;
     /** Path to directory containing `html_ui`. */
     packageDir: string;
-    /** esbuild plugins to include (<https://github.com/esbuild/community-plugins>) */
+    /** esbuild plugins to include for all instruments (<https://github.com/esbuild/community-plugins>) */
     plugins?: Plugin[];
     /** All instruments to be bundled by Mach. */
     instruments: Instrument[];

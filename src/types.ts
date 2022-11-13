@@ -56,6 +56,9 @@ export interface Instrument {
     modules?: Instrument[];
     /** (Required for instruments included as `modules`) Import name to resolve to the bundled module. */
     resolve?: string;
+
+    /** esbuild plugins to include for only this instrument (<https://github.com/esbuild/community-plugins>) */
+    plugins?: Plugin[];
 }
 
 export interface MachConfig {
@@ -63,11 +66,18 @@ export interface MachConfig {
     packageName: string;
     /** Path to directory containing `html_ui`. */
     packageDir: string;
-    /** esbuild plugins to include (<https://github.com/esbuild/community-plugins>) */
+    /** esbuild plugins to include for all instruments (<https://github.com/esbuild/community-plugins>) */
     plugins?: Plugin[];
     /** All instruments to be bundled by Mach. */
     instruments: Instrument[];
 }
+
+export const PluginSchema: z.ZodType<Plugin> = z.object({
+    name: z.string(),
+    setup: z.function()
+        .args(z.any())
+        .returns(z.union([z.void(), z.promise(z.void())])),
+});
 
 export const InstrumentSchema: z.ZodType<Instrument> = z.lazy(() => z.object({
     name: z.string(),
@@ -94,15 +104,14 @@ export const InstrumentSchema: z.ZodType<Instrument> = z.lazy(() => z.object({
 
     modules: z.array(InstrumentSchema).optional(),
     resolve: z.string().optional(),
+
+    plugins: z.array(PluginSchema).optional(),
 }));
 
 export const MachConfigSchema = z.object({
     packageName: z.string(),
     packageDir: z.string(),
-    plugins: z.array(z.object({
-        name: z.string(),
-        setup: z.function(),
-    })).optional(),
+    plugins: z.array(PluginSchema).optional(),
     instruments: z.array(InstrumentSchema),
 });
 

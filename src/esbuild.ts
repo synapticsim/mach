@@ -33,7 +33,7 @@ async function build(config: MachConfig, instrument: Instrument, logger: BuildLo
         logOverride: process.env.WARNINGS_ERROR === 'true' ? ESBUILD_ERRORS : undefined,
         incremental: true,
         metafile: true,
-        plugins: [...(config.plugins ?? [])],
+        plugins: [...(config.plugins ?? []), ...(instrument.plugins ?? [])],
         define: {
             ...envVars,
             'process.env.MODULE': module.toString(),
