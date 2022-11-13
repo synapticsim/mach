@@ -11,12 +11,16 @@ import { BuildLogger } from './logger';
 import { includeCSS, resolve, writeMetafile, writePackageSources } from './plugins';
 
 async function build(config: MachConfig, instrument: Instrument, logger: BuildLogger, module = false): Promise<BuildResultWithMeta> {
-    // const envVars = Object.fromEntries(Object.entries(process.env).map(([key, value]) => [key, `"${value}"`]));
+    const envVars = Object.fromEntries(
+        Object.entries(process.env)
+            .filter(([key]) => /^[A-Za-z_]*$/.test(key))
+            .map(([key, value]) => [`process.env.${key}`, `"${value?.replace(/\\/g, '/') ?? ''}"`]),
+    );
 
     const buildOptions: BuildOptions & { incremental: true, metafile: true } = {
         entryPoints: [instrument.index],
         outfile: path.join(process.env.BUNDLES_DIR, instrument.name, module ? '/module/module.mjs' : 'bundle.js'),
-        external: ['*.ttf'],
+        external: ['/Images/*', '/Fonts/*'],
         bundle: true,
         target: 'es2017',
         format: (module ? 'esm' : 'iife'),
@@ -25,7 +29,7 @@ async function build(config: MachConfig, instrument: Instrument, logger: BuildLo
         metafile: true,
         plugins: config.plugins ? [...config.plugins] : [],
         define: {
-            // ...envVars,
+            ...envVars,
             'process.env.MODULE': module.toString(),
         },
     };
