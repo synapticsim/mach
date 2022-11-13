@@ -11,7 +11,7 @@ import { BuildLogger } from './logger';
 import { includeCSS, resolve, writeMetafile, writePackageSources } from './plugins';
 
 async function build(config: MachConfig, instrument: Instrument, logger: BuildLogger, module = false): Promise<BuildResultWithMeta> {
-    const envVars = Object.fromEntries(Object.entries(process.env).map(([key, value]) => [key, `"${value}"`]));
+    // const envVars = Object.fromEntries(Object.entries(process.env).map(([key, value]) => [key, `"${value}"`]));
 
     const buildOptions: BuildOptions & { incremental: true, metafile: true } = {
         entryPoints: [instrument.index],
@@ -25,7 +25,7 @@ async function build(config: MachConfig, instrument: Instrument, logger: BuildLo
         metafile: true,
         plugins: config.plugins ? [...config.plugins] : [],
         define: {
-            ...envVars,
+            // ...envVars,
             'process.env.MODULE': module.toString(),
         },
     };
