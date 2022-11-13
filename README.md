@@ -21,6 +21,7 @@ Mach also allows you to create nested instruments, enabling you to bundle MSFS A
 - `-f, --filter <regex>` regex filter of included instrument names
 - `-v, --verbose` output additional build information
 - `-m, --output-metafile` output `build_meta.json` file to bundles directory
+- `-s, --skip-simulator-package` skips writing simulator package templates
 
 #### `mach build [options]`
 

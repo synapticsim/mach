@@ -53,7 +53,7 @@ async function build(config: MachConfig, instrument: Instrument, logger: BuildLo
         );
     }
 
-    if (instrument.simulatorPackage && !module) {
+    if (instrument.simulatorPackage && process.env.SKIP_SIM_PACKAGE !== 'true' && !module) {
         buildOptions.plugins!.push(writePackageSources(logger, instrument));
     }
 

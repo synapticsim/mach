@@ -36,7 +36,7 @@ export class BuildLogger {
         } else {
             this.logger.success(`Built ${name} in ${chalk.greenBright((time).toFixed(), 'ms')}`);
         }
-        if (process.env.VERBOSE_OUTPUT) {
+        if (process.env.VERBOSE_OUTPUT === 'true') {
             for (const [file, meta] of Object.entries(result.metafile.outputs)) {
                 this.logger.file(chalk.gray(`${file} — ${chalk.cyan(filesize(meta.bytes))}`));
             }
