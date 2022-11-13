@@ -6,8 +6,9 @@
 import { Plugin } from 'esbuild';
 import path from 'path';
 import fs from 'fs/promises';
+import { renderFile } from 'template-file';
 import { BuildLogger } from './logger';
-import { htmlTemplate, jsTemplate } from './templates';
+import { Instrument } from './types';
 
 /**
  * Override module resolution of specified imports.
@@ -58,22 +59,47 @@ export const writeMetafile: Plugin = {
 /**
  * Export simulator packages to `PackageSources` directory
  */
-export const writePackageSources = (logger: BuildLogger, instrumentName: string, imports: string[] = [], isInteractive = true): Plugin => ({
+export const writePackageSources = (logger: BuildLogger, instrument: Instrument): Plugin => ({
     name: 'writePackageSources',
     setup(build) {
         build.onEnd(async (result) => {
-            if (result.errors.length === 0) {
+            if (instrument.simulatorPackage && result.errors.length === 0) {
                 const jsPath = path.join(path.dirname(build.initialOptions.outfile!), 'bundle.js');
                 const cssPath = path.join(path.dirname(build.initialOptions.outfile!), 'bundle.css');
 
                 const js = await fs.readFile(jsPath, { encoding: 'utf-8' });
                 const css = await fs.readFile(cssPath, { encoding: 'utf-8' });
 
-                const packageTarget = path.join(process.env.PACKAGE_DIR, 'html_ui/Pages/VCockpit/Instruments', process.env.PACKAGE_NAME, instrumentName);
+                const packageTarget = path.join(process.env.PACKAGE_DIR, 'html_ui/Pages/VCockpit/Instruments', process.env.PACKAGE_NAME, instrument.name);
                 await fs.mkdir(packageTarget, { recursive: true });
 
-                await fs.writeFile(path.join(packageTarget, 'template.html'), htmlTemplate(instrumentName, imports, js, css));
-                await fs.writeFile(path.join(packageTarget, 'template.js'), jsTemplate(instrumentName, isInteractive));
+                const packagePath = path.join('/Pages/VCockpit/Instruments', process.env.PACKAGE_NAME, instrument.name);
+                const fileName = instrument.simulatorPackage.fileName ?? 'template';
+                const templateId = instrument.simulatorPackage.templateId ?? instrument.name;
+
+                await fs.writeFile(path.join(packageTarget, `${fileName}.css`), css);
+                await fs.writeFile(
+                    path.join(packageTarget, `${fileName}.js`),
+                    instrument.simulatorPackage.type === 'react'
+                        ? await renderFile(path.join(__dirname, './templates/reactTemplate.cjs'), {
+                            templateId,
+                            jsBundle: js,
+                            instrumentName: `${process.env.PACKAGE_NAME.toLowerCase()}-${templateId.toLowerCase()}`,
+                        })
+                        : js,
+                );
+                await fs.writeFile(
+                    path.join(packageTarget, `${fileName}.html`),
+                    await renderFile(path.join(__dirname, './templates/template.html'), {
+                        templateId,
+                        mountElementId: instrument.simulatorPackage.type === 'react'
+                            ? 'MSFS_REACT_MOUNT'
+                            : instrument.simulatorPackage.mountElementId,
+                        imports: instrument.simulatorPackage.imports ?? [],
+                        cssPath: path.join(packagePath, `${fileName}.css`).replace(/\\/g, '/'),
+                        jsPath: path.join(packagePath, `${fileName}.js`).replace(/\\/g, '/'),
+                    }),
+                );
             }
         });
     },

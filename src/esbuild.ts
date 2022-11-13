@@ -6,16 +6,15 @@
 import esbuild, { BuildIncremental, BuildOptions } from 'esbuild';
 import chokidar from 'chokidar';
 import path from 'path';
-import fs from 'fs/promises';
 import { BuildResultWithMeta, Instrument, MachConfig } from './types';
 import { BuildLogger } from './logger';
 import { includeCSS, resolve, writeMetafile, writePackageSources } from './plugins';
 
 async function build(config: MachConfig, instrument: Instrument, logger: BuildLogger, module = false): Promise<BuildResultWithMeta> {
-    const configFile = JSON.parse(await fs.readFile(path.join(instrument.directory, 'config.json'), { encoding: 'utf-8' }));
+    const envVars = Object.fromEntries(Object.entries(process.env).map(([key, value]) => [key, `"${value}"`]));
 
     const buildOptions: BuildOptions & { incremental: true, metafile: true } = {
-        entryPoints: [path.join(instrument.directory, instrument.input ?? configFile.index)],
+        entryPoints: [instrument.index],
         outfile: path.join(process.env.BUNDLES_DIR, instrument.name, module ? '/module/module.mjs' : 'bundle.js'),
         external: ['*.ttf'],
         bundle: true,
@@ -26,8 +25,8 @@ async function build(config: MachConfig, instrument: Instrument, logger: BuildLo
         metafile: true,
         plugins: config.plugins ? [...config.plugins] : [],
         define: {
+            ...envVars,
             'process.env.MODULE': module.toString(),
-            'process.env.NODE_ENV': `"${process.env.NODE_ENV ?? 'production'}"`,
         },
     };
 
@@ -50,8 +49,8 @@ async function build(config: MachConfig, instrument: Instrument, logger: BuildLo
         );
     }
 
-    if (!instrument.skipPackageSources && !module) {
-        buildOptions.plugins!.push(writePackageSources(logger, instrument.name, instrument.imports, configFile.isInteractive));
+    if (instrument.simulatorPackage && !module) {
+        buildOptions.plugins!.push(writePackageSources(logger, instrument));
     }
 
     return esbuild.build(buildOptions);
