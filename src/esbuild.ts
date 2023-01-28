@@ -18,7 +18,7 @@ async function build(config: MachConfig, instrument: Instrument, logger: BuildLo
                 `process.env.${key}`,
                 value?.toLowerCase() === 'true' || value?.toLowerCase() === 'false'
                     ? value.toLowerCase()
-                    : `"${value?.replace(/\\/g, '/') ?? ''}"`,
+                    : `"${value?.replace(/\\/g, '/').replace('"', '\\"') ?? ''}"`,
             ])),
     );
 
