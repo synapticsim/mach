@@ -23,6 +23,7 @@ async function build(config: MachConfig, instrument: Instrument, logger: BuildLo
     );
 
     const buildOptions: BuildOptions & { incremental: true, metafile: true } = {
+        absWorkingDir: process.cwd(),
         entryPoints: [instrument.index],
         outfile: path.join(process.env.BUNDLES_DIR, instrument.name, module ? '/module/module.mjs' : 'bundle.js'),
         external: ['/Images/*', '/Fonts/*'],
