@@ -16,6 +16,7 @@ declare global {
             VERBOSE_OUTPUT: string;
             OUTPUT_METAFILE: string;
             OUTPUT_SOURCEMAPS: string;
+            WORK_IN_CONFIG_DIR: string;
         }
     }
 }

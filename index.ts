@@ -34,6 +34,7 @@ const cli = new Command();
 
 const commandWithOptions = (name: string) => cli.command(name)
     .option('-c, --config <filename>', 'specify path to configuration file', './mach.config.js')
+    .option('-d, --work-in-config-dir', 'use config directory as working directory')
     .option('-b, --bundles <dirname>', 'bundles output directory', './bundles')
     .option('-e, --werror', 'makes all warnings into errors')
     .option('-f, --filter <regex>', 'regex filter of included instrument names')
@@ -53,6 +54,7 @@ const commandWithOptions = (name: string) => cli.command(name)
         process.env.VERBOSE_OUTPUT = actionCommand.getOptionValue('verbose') ?? false;
         process.env.OUTPUT_METAFILE = actionCommand.getOptionValue('outputMetafile') ?? false;
         process.env.OUTPUT_SOURCEMAPS = actionCommand.getOptionValue('outputSourcemaps') ?? false;
+        process.env.WORK_IN_CONFIG_DIR = actionCommand.getOptionValue('workInConfigDir') ?? false;
 
         actionCommand.setOptionValue('filter', new RegExp(actionCommand.getOptionValue('filter')));
 
@@ -67,6 +69,10 @@ const commandWithOptions = (name: string) => cli.command(name)
                 } else {
                     signale.error('Invalid config file', chalk.redBright(process.env.CONFIG_PATH));
                     process.exit(1);
+                }
+
+                if (process.env.WORK_IN_CONFIG_DIR) {
+                    process.chdir(path.dirname(process.env.CONFIG_PATH));
                 }
             })
             .catch(() => {
