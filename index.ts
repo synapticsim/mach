@@ -46,8 +46,8 @@ const commandWithOptions = (name: string) => cli.command(name)
     .hook('preAction', async (thisCommand, actionCommand) => {
         signale.info(`Welcome to ${chalk.cyanBright('Mach')}, v${version}`);
 
-        process.env.CONFIG_PATH = path.join(process.cwd(), actionCommand.getOptionValue('config'));
-        process.env.BUNDLES_DIR = path.join(process.cwd(), actionCommand.getOptionValue('bundles'));
+        process.env.CONFIG_PATH = path.resolve(actionCommand.getOptionValue('config'));
+        process.env.BUNDLES_DIR = path.resolve(actionCommand.getOptionValue('bundles'));
         process.env.WARNINGS_ERROR = actionCommand.getOptionValue('werror') ?? false;
         process.env.MINIFY_BUNDLES = actionCommand.getOptionValue('minify') ?? false;
         process.env.SKIP_SIM_PACKAGE = actionCommand.getOptionValue('skipSimulatorPackage') ?? false;
