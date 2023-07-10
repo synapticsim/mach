@@ -108,6 +108,10 @@ export async function buildInstrument(config: MachConfig, instrument: Instrument
     return result;
 }
 
+function resolveFilename(input: string): string {
+    return path.resolve(input.slice(input.indexOf(process.cwd())));
+}
+
 export async function watchInstrument(config: MachConfig, instrument: Instrument, logger: BuildLogger, module = false): Promise<BuildResultWithMeta> {
     // Recursively watch included submodules
     if (instrument.modules) {
@@ -121,7 +125,8 @@ export async function watchInstrument(config: MachConfig, instrument: Instrument
         return result;
     }
 
-    const watcher = chokidar.watch(Object.keys(result.metafile.inputs).map((input) => path.resolve(input)));
+    const builtFiles = Object.keys(result.metafile.inputs).map(resolveFilename);
+    const watcher = chokidar.watch(builtFiles);
     watcher.on('change', async (filePath) => {
         logger.changeDetected(filePath);
 
@@ -146,7 +151,7 @@ export async function watchInstrument(config: MachConfig, instrument: Instrument
             logger.buildComplete(instrument.name, endTime - startTime, result);
 
             const watchedFiles = watcher.getWatched();
-            const bundledFiles = Object.keys(result.metafile.inputs).map((input) => path.resolve(input));
+            const bundledFiles = Object.keys(result.metafile.inputs).map(resolveFilename);
 
             // Watch files that have been added to the bundle
             for (const file of bundledFiles) {
