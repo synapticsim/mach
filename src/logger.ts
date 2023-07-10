@@ -19,10 +19,10 @@ export class BuildLogger {
             scope,
             types: {
                 file: { badge: ' ', label: 'file', color: 'blue', logLevel: 'info' },
-                errorMessage: { badge: '', label: '', color: 'white', logLevel: 'error' },
-                errorLocation: { badge: '→', label: '', color: 'white', logLevel: 'error' },
-                warningMessage: { badge: '', label: '', color: 'white', logLevel: 'warning' },
-                warningLocation: { badge: '→', label: '', color: 'white', logLevel: 'warning' },
+                errorMessage: { badge: '', label: '', color: 'white', logLevel: 'error', stream: process.stderr },
+                errorLocation: { badge: '→', label: '', color: 'white', logLevel: 'error', stream: process.stderr },
+                warningMessage: { badge: '', label: '', color: 'white', logLevel: 'warning', stream: process.stderr },
+                warningLocation: { badge: '→', label: '', color: 'white', logLevel: 'warning', stream: process.stderr },
             },
         });
     }
