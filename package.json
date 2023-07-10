@@ -1,6 +1,6 @@
 {
   "name": "@synaptic-simulations/mach",
-  "version": "1.0.1",
+  "version": "1.0.2",
   "description": "The last MSFS instrument bundler you'll ever need.",
   "main": "./dist/index.js",
   "types": "./dist/index.d.ts",
