@@ -109,7 +109,8 @@ export async function buildInstrument(config: MachConfig, instrument: Instrument
 }
 
 function resolveFilename(input: string): string {
-    return path.resolve(input.slice(input.indexOf(process.cwd())));
+    const cwdIndex = input.indexOf(process.cwd());
+    return path.resolve(cwdIndex >= 0 ? input.slice(cwdIndex) : input);
 }
 
 export async function watchInstrument(config: MachConfig, instrument: Instrument, logger: BuildLogger, module = false): Promise<BuildResultWithMeta> {
