@@ -1,4 +1,4 @@
-'use strict';
+"use strict';
 /* global BaseInstrument */
 /* global registerInstrument */
 class InstrumentLogic extends BaseInstrument {
@@ -14,7 +14,7 @@ class InstrumentLogic extends BaseInstrument {
     }
 
     get templateID() {
-        return '{{ templateId }}';
+        return "{{ templateId }}";
     }
 
     get isInteractive() {
@@ -32,14 +32,14 @@ class InstrumentLogic extends BaseInstrument {
 
     Update() {
         super.Update();
-        this.dispatchEvent(new CustomEvent('update', { detail: this.getDeltaTime() }));
+        this.dispatchEvent(new CustomEvent("update", { detail: this.getDeltaTime() }));
     }
 
     onInteractionEvent(event) {
         const eventName = String(event);
         this.dispatchEvent(new CustomEvent(eventName));
-        this.dispatchEvent(new CustomEvent('*', { detail: eventName }));
+        this.dispatchEvent(new CustomEvent("*", { detail: eventName }));
     }
 }
 
-registerInstrument('{{ instrumentName }}', InstrumentLogic);
+registerInstrument("{{ instrumentName }}", InstrumentLogic);
