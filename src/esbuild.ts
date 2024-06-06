@@ -6,16 +6,19 @@
 import path from "node:path";
 import chokidar from "chokidar";
 import esbuild, { type BuildIncremental, type BuildOptions } from "esbuild";
+
 import type { BuildLogger } from "./logger";
 import { includeCSS, resolve, writeMetafile, writePackageSources } from "./plugins";
-import { type BuildResultWithMeta, ESBUILD_ERRORS, type Instrument, type MachConfig } from "./types";
+import { type BuildResultWithMeta, ESBUILD_ERRORS, type Instrument, type MachArgs, type MachConfig } from "./types";
 
 async function build(
-    config: MachConfig,
+    args: MachArgs,
     instrument: Instrument,
     logger: BuildLogger,
     module = false,
 ): Promise<BuildResultWithMeta> {
+    const bundlesDir = args.bundles ?? "./bundles";
+
     const envVars = Object.fromEntries(
         Object.entries(process.env)
             .filter(([key]) => /^[A-Za-z_]*$/.test(key))
@@ -30,7 +33,7 @@ async function build(
     const buildOptions: BuildOptions & { incremental: true; metafile: true } = {
         absWorkingDir: process.cwd(),
         entryPoints: [instrument.index],
-        outfile: path.join(process.env.BUNDLES_DIR, instrument.name, module ? "/module/module.mjs" : "bundle.js"),
+        outfile: path.join(bundlesDir, instrument.name, module ? "/module/module.mjs" : "bundle.js"),
         external: ["/Images/*", "/Fonts/*"],
         incremental: true,
         metafile: true,
@@ -38,17 +41,17 @@ async function build(
         target: "es2017",
         format: module ? "esm" : "iife",
         logLevel: "silent",
-        logOverride: process.env.WARNINGS_ERROR === "true" ? ESBUILD_ERRORS : undefined,
-        sourcemap: process.env.OUTPUT_SOURCEMAPS === "true" ? "inline" : undefined,
-        minify: process.env.MINIFY_BUNDLES === "true",
-        plugins: [...(config.plugins ?? []), ...(instrument.plugins ?? [])],
+        logOverride: args.werror ? ESBUILD_ERRORS : undefined,
+        sourcemap: args.outputSourcemaps ? "inline" : undefined,
+        minify: args.minify,
+        plugins: [...(args.config.plugins ?? []), ...(instrument.plugins ?? [])],
         define: {
             ...envVars,
             "process.env.MODULE": module.toString(),
         },
     };
 
-    if (process.env.OUTPUT_METAFILE) {
+    if (args.outputMetafile) {
         buildOptions.plugins?.push(writeMetafile);
     }
 
@@ -59,25 +62,23 @@ async function build(
                 Object.fromEntries(
                     instrument.modules.map((mod) => [
                         mod.resolve,
-                        path.join(process.env.BUNDLES_DIR, mod.name, "/module/module.mjs"),
+                        path.join(bundlesDir, mod.name, "/module/module.mjs"),
                     ]),
                 ),
             ),
-            includeCSS(
-                instrument.modules.map((mod) => path.join(process.env.BUNDLES_DIR, mod.name, "/module/module.css")),
-            ),
+            includeCSS(instrument.modules.map((mod) => path.join(bundlesDir, mod.name, "/module/module.css"))),
         );
     }
 
-    if (instrument.simulatorPackage && process.env.SKIP_SIM_PACKAGE !== "true" && !module) {
-        buildOptions.plugins?.push(writePackageSources(logger, instrument));
+    if (instrument.simulatorPackage && args.skipSimulatorPackage && !module) {
+        buildOptions.plugins?.push(writePackageSources(args, instrument));
     }
 
     return esbuild.build(buildOptions);
 }
 
 export async function buildInstrument(
-    config: MachConfig,
+    args: MachArgs,
     instrument: Instrument,
     logger: BuildLogger,
     module = false,
@@ -87,7 +88,7 @@ export async function buildInstrument(
     // Recursively build included submodules
     if (instrument.modules) {
         moduleResults = await Promise.all(
-            instrument.modules.map((module) => buildInstrument(config, module, logger, true)),
+            instrument.modules.map((module) => buildInstrument(args, module, logger, true)),
         );
 
         // Skip main instrument bundling if the submodule fails.
@@ -103,7 +104,7 @@ export async function buildInstrument(
     }
 
     const startTime = performance.now();
-    const { success, result } = await build(config, instrument, logger, module)
+    const { success, result } = await build(args, instrument, logger, module)
         .then((result: BuildResultWithMeta) => ({
             success: true,
             result,
@@ -130,17 +131,17 @@ function resolveFilename(input: string): string {
 }
 
 export async function watchInstrument(
-    config: MachConfig,
+    args: MachArgs,
     instrument: Instrument,
     logger: BuildLogger,
     module = false,
 ): Promise<BuildResultWithMeta> {
     // Recursively watch included submodules
     if (instrument.modules) {
-        await Promise.all(instrument.modules.map((module) => watchInstrument(config, module, logger, true)));
+        await Promise.all(instrument.modules.map((module) => watchInstrument(args, module, logger, true)));
     }
 
-    let result = await buildInstrument(config, instrument, logger, module);
+    let result = await buildInstrument(args, instrument, logger, module);
 
     // Chokidar needs a list of files to watch, but we don't get the metafile on a failed build.
     if (result.errors.length > 0) {

@@ -10,7 +10,6 @@
     "scripts": {
         "build": "tsc && copyfiles src/templates/* dist",
         "watch": "nodemon --watch index.ts --watch src --ext * --exec \"yarn build || exit 1\"",
-        "test": "echo \"Error: no test specified\" && exit 1",
         "lint": "biome check",
         "lint:fix": "biome check --fix --unsafe"
     },

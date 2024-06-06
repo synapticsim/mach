@@ -3,33 +3,22 @@
  * SPDX-License-Identifier: MIT
  */
 
-import path from "node:path";
 import chalk from "chalk";
 import signale from "signale";
+
 import { buildInstrument, watchInstrument } from "./esbuild";
 import { BuildLogger } from "./logger";
-import type { MachConfig } from "./types";
+import type { MachArgs } from "./types";
 
-function configureEnvironment(conf: MachConfig) {
-    process.env.CONFIG_PATH = process.env.CONFIG_PATH ?? path.join(process.cwd(), "mach.config.js");
-    process.env.BUNDLES_DIR = process.env.BUNDLES_DIR ?? path.join(process.cwd(), "bundles");
-    process.env.OUTPUT_METAFILE = process.env.OUTPUT_METAFILE ?? false;
-
-    process.env.PACKAGE_NAME = conf.packageName;
-    process.env.PACKAGE_DIR = path.join(process.cwd(), conf.packageDir);
-}
-
-export async function machBuild(conf: MachConfig, filter?: RegExp) {
-    configureEnvironment(conf);
-
-    const instruments = conf.instruments.filter((instrument) => filter?.test(instrument.name) ?? true);
+export async function machBuild(args: MachArgs) {
+    const instruments = args.config.instruments.filter((instrument) => args.filter?.test(instrument.name) ?? true);
 
     signale.start(`Building ${instruments.length} instruments\n`);
 
     const startTime = performance.now();
     Promise.all(
         instruments.map(async (instrument) => {
-            const result = await buildInstrument(conf, instrument, new BuildLogger(instrument.name));
+            const result = await buildInstrument(args, instrument, new BuildLogger(instrument.name, args.verbose));
             result.rebuild?.dispose();
             return result;
         }),
@@ -51,13 +40,13 @@ export async function machBuild(conf: MachConfig, filter?: RegExp) {
     });
 }
 
-export async function machWatch(conf: MachConfig, filter?: RegExp) {
-    configureEnvironment(conf);
-
-    const instruments = conf.instruments.filter((instrument) => filter?.test(instrument.name) ?? true);
+export async function machWatch(args: MachArgs) {
+    const instruments = args.config.instruments.filter((instrument) => args.filter?.test(instrument.name) ?? true);
 
     Promise.all(
-        instruments.map((instrument) => watchInstrument(conf, instrument, new BuildLogger(instrument.name))),
+        instruments.map((instrument) =>
+            watchInstrument(args, instrument, new BuildLogger(instrument.name, args.verbose)),
+        ),
     ).then((results) => {
         if (results.some((res) => res.errors.length > 0)) {
             signale.error("Watch mode requires a build-able bundle to initialize");

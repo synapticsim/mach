@@ -7,14 +7,16 @@ import path from "node:path";
 import chalk from "chalk";
 import type { Message } from "esbuild";
 import { filesize } from "filesize";
-/* eslint no-console: 0 */
 import signale, { type DefaultMethods, type Signale } from "signale";
+
 import type { BuildResultWithMeta } from "./types";
 
 export class BuildLogger {
     private readonly logger: Signale<DefaultMethods | "file" | "errorMessage" | "errorLocation">;
 
-    constructor(scope: string) {
+    private readonly verbose: boolean;
+
+    constructor(scope: string, verbose = false) {
         this.logger = new signale.Signale({
             scope,
             types: {
@@ -25,6 +27,7 @@ export class BuildLogger {
                 warningLocation: { badge: "→", label: "", color: "white", logLevel: "warning", stream: process.stderr },
             },
         });
+        this.verbose = verbose;
     }
 
     buildComplete(name: string, time: number, result: BuildResultWithMeta) {
@@ -38,7 +41,7 @@ export class BuildLogger {
         } else {
             this.logger.success(`Built ${name} in ${chalk.greenBright(time.toFixed(), "ms")}`);
         }
-        if (process.env.VERBOSE_OUTPUT === "true") {
+        if (this.verbose) {
             for (const [file, meta] of Object.entries(result.metafile.outputs)) {
                 this.logger.file(chalk.gray(`${file} — ${chalk.cyan(filesize(meta.bytes))}`));
             }

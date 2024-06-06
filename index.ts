@@ -10,24 +10,15 @@ import chalk from "chalk";
 import { Command } from "commander";
 import dotenv from "dotenv";
 import signale from "signale";
+
 import { description, version } from "./package.json";
 import { machBuild, machWatch } from "./src/mach";
-import { type MachConfig, MachConfigSchema } from "./src/types";
+import { type MachArgs, MachArgsSchema, MachConfigSchema } from "./src/types";
 
 try {
     dotenv.config();
 } catch {
     // .env is optional, but dotenv throws an error if it cannot load it
-}
-
-interface ParsedCommandArgs {
-    config: MachConfig;
-    bundles: string;
-    out: string;
-    filter?: RegExp;
-    verbose?: boolean;
-    outputMetafile?: boolean;
-    skipSimulatorPackage?: boolean;
 }
 
 const cli = new Command();
@@ -48,37 +39,32 @@ const commandWithOptions = (name: string) =>
         .hook("preAction", async (thisCommand, actionCommand) => {
             signale.info(`Welcome to ${chalk.cyanBright("Mach")}, v${version}`);
 
-            process.env.CONFIG_PATH = path.resolve(actionCommand.getOptionValue("config"));
-            process.env.BUNDLES_DIR = path.resolve(actionCommand.getOptionValue("bundles"));
-            process.env.WARNINGS_ERROR = actionCommand.getOptionValue("werror") ?? false;
-            process.env.MINIFY_BUNDLES = actionCommand.getOptionValue("minify") ?? false;
-            process.env.SKIP_SIM_PACKAGE = actionCommand.getOptionValue("skipSimulatorPackage") ?? false;
-            process.env.VERBOSE_OUTPUT = actionCommand.getOptionValue("verbose") ?? false;
-            process.env.OUTPUT_METAFILE = actionCommand.getOptionValue("outputMetafile") ?? false;
-            process.env.OUTPUT_SOURCEMAPS = actionCommand.getOptionValue("outputSourcemaps") ?? false;
-            process.env.WORK_IN_CONFIG_DIR = actionCommand.getOptionValue("workInConfigDir") ?? false;
+            const config = path.resolve(actionCommand.getOptionValue("config"));
 
-            actionCommand.setOptionValue("filter", new RegExp(actionCommand.getOptionValue("filter")));
+            const filter = actionCommand.getOptionValue("filter");
+            if (filter) {
+                actionCommand.setOptionValue("filter", new RegExp(filter));
+            }
 
             // Load config
-            await import(process.env.CONFIG_PATH.replace(/\\/g, "/"))
+            await import(config.replace(/\\/g, "/"))
                 .then((module) => {
                     // Check config integrity
                     const result = MachConfigSchema.safeParse(module.default);
                     if (result.success) {
                         actionCommand.setOptionValue("config", result.data);
-                        signale.info("Loaded config file", chalk.cyanBright(process.env.CONFIG_PATH), "\n");
+                        signale.info("Loaded config file", chalk.cyanBright(config), "\n");
                     } else {
-                        signale.error("Invalid config file", chalk.redBright(process.env.CONFIG_PATH));
+                        signale.error("Invalid config file", chalk.redBright(config));
                         process.exit(1);
                     }
 
-                    if (process.env.WORK_IN_CONFIG_DIR) {
-                        process.chdir(path.dirname(process.env.CONFIG_PATH));
+                    if (actionCommand.getOptionValue("workInConfigDir")) {
+                        process.chdir(path.dirname(config));
                     }
                 })
                 .catch(() => {
-                    signale.error("Unable to load config file", chalk.redBright(process.env.CONFIG_PATH));
+                    signale.error("Unable to load config file", chalk.redBright(config));
                     process.exit(1);
                 });
         });
@@ -87,11 +73,11 @@ cli.name("mach").version(version).description(description);
 
 commandWithOptions("build")
     .description("compile instruments specified in configuration file")
-    .action(({ config, filter }: ParsedCommandArgs) => machBuild(config, filter));
+    .action((args: MachArgs) => machBuild(MachArgsSchema.parse(args)));
 
 commandWithOptions("watch")
     .description("watch instruments for changes and re-compile bundles when updated")
-    .action(({ config, filter }: ParsedCommandArgs) => machWatch(config, filter));
+    .action((args: MachArgs) => machWatch(MachArgsSchema.parse(args)));
 
 cli.parse();
 

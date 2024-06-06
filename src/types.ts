@@ -72,6 +72,27 @@ export interface MachConfig {
     instruments: Instrument[];
 }
 
+export interface MachArgs {
+    /** Build configuration. */
+    config: MachConfig;
+    /** Path to bundle output directory. Defaults to `./bundles` */
+    bundles?: string;
+    /** Treat all ESBuild warnings as errors. */
+    werror?: boolean;
+    /** Instrument names to include. */
+    filter?: RegExp;
+    /** Minify bundled code. */
+    minify?: boolean;
+    /** Output additional build debug info. */
+    verbose?: boolean;
+    /** Output `build_meta.json` file to bundle directory. */
+    outputMetafile?: boolean;
+    /** Append JS source maps to end of bundles. */
+    outputSourcemaps?: boolean;
+    /** Skip writing simulator package files. */
+    skipSimulatorPackage?: boolean;
+}
+
 export const PluginSchema: z.ZodType<Plugin> = z.object({
     name: z.string(),
     setup: z
@@ -118,6 +139,18 @@ export const MachConfigSchema = z.object({
     packageDir: z.string(),
     plugins: z.array(PluginSchema).optional(),
     instruments: z.array(InstrumentSchema),
+});
+
+export const MachArgsSchema = z.object({
+    config: MachConfigSchema,
+    bundles: z.string().optional(),
+    werror: z.boolean().optional(),
+    filter: z.instanceof(RegExp).optional(),
+    minify: z.boolean().optional(),
+    verbose: z.boolean().optional(),
+    outputMetafile: z.boolean().optional(),
+    outputSourcemaps: z.boolean().optional(),
+    skipSimulatorPackage: z.boolean().optional(),
 });
 
 const ESBUILD_WARNINGS = [

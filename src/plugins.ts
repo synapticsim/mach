@@ -7,8 +7,8 @@ import fs from "node:fs/promises";
 import path from "node:path";
 import type { Plugin } from "esbuild";
 import { renderFile } from "template-file";
-import type { BuildLogger } from "./logger";
-import type { Instrument } from "./types";
+
+import type { Instrument, MachArgs } from "./types";
 
 /**
  * Override module resolution of specified imports.
@@ -45,7 +45,7 @@ export const writeMetafile: Plugin = {
     name: "writeMetafile",
     setup(build) {
         build.onEnd((result) => {
-            if (process.env.OUTPUT_METAFILE && result.errors.length === 0) {
+            if (result.errors.length === 0) {
                 fs.writeFile(
                     path.join(path.dirname(build.initialOptions.outfile!), "build_meta.json"),
                     JSON.stringify(result.metafile),
@@ -58,7 +58,7 @@ export const writeMetafile: Plugin = {
 /**
  * Export simulator packages to `PackageSources` directory
  */
-export const writePackageSources = (logger: BuildLogger, instrument: Instrument): Plugin => ({
+export const writePackageSources = (args: MachArgs, instrument: Instrument): Plugin => ({
     name: "writePackageSources",
     setup(build) {
         build.onEnd(async (result) => {
@@ -69,11 +69,11 @@ export const writePackageSources = (logger: BuildLogger, instrument: Instrument)
                 const js = await fs.readFile(jsBundlePath, { encoding: "utf-8" });
                 const css = await fs.readFile(cssBundlePath, { encoding: "utf-8" });
 
-                const htmlUiPath = path.join(process.env.PACKAGE_DIR, "html_ui");
+                const htmlUiPath = path.join(process.cwd(), args.config.packageDir, "html_ui");
                 const packageTarget = path.join(
                     htmlUiPath,
                     "Pages/VCockpit/Instruments",
-                    process.env.PACKAGE_NAME,
+                    args.config.packageName,
                     instrument.name,
                 );
                 await fs.mkdir(packageTarget, { recursive: true });
@@ -90,7 +90,7 @@ export const writePackageSources = (logger: BuildLogger, instrument: Instrument)
 
                 const templateParams = {
                     templateId,
-                    instrumentName: `${process.env.PACKAGE_NAME.toLowerCase()}-${templateId.toLowerCase()}`,
+                    instrumentName: `${args.config.packageName.toLowerCase()}-${templateId.toLowerCase()}`,
                     mountElementId:
                         instrument.simulatorPackage.type === "react"
                             ? "MSFS_REACT_MOUNT"
