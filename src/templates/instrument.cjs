@@ -1,7 +1,8 @@
-"use strict';
+'use strict';
 /* global BaseInstrument */
 /* global registerInstrument */
-class InstrumentLogic extends BaseInstrument {
+
+class _MachInstrument_{{ templateId }} extends BaseInstrument {
     constructor() {
         super();
         let lastTime = this._lastTime;
@@ -14,7 +15,7 @@ class InstrumentLogic extends BaseInstrument {
     }
 
     get templateID() {
-        return "{{ templateId }}";
+        return '{{ templateId }}';
     }
 
     get isInteractive() {
@@ -27,7 +28,7 @@ class InstrumentLogic extends BaseInstrument {
 
     connectedCallback() {
         super.connectedCallback();
-        {{ jsBundle }}
+        Include.addScript("{{ jsPath }}");
     }
 
     Update() {
@@ -42,4 +43,4 @@ class InstrumentLogic extends BaseInstrument {
     }
 }
 
-registerInstrument("{{ instrumentName }}", InstrumentLogic);
+registerInstrument("{{ instrumentName }}", _MachInstrument_{{ templateId }});

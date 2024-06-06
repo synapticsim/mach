@@ -15,7 +15,7 @@ interface PackageSettings {
      * - `BaseInstrument` instruments must specify the `instrumentId` and `mountElementId` to match the instrument configuration.
      */
     type: string;
-    /** Final template filename. Defaults to `template` */
+    /** Final template filename. Defaults to `instrument`. */
     fileName?: string;
     /** Simulator packages to import in the HTML template. */
     imports?: string[];

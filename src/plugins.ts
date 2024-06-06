@@ -63,47 +63,57 @@ export const writePackageSources = (logger: BuildLogger, instrument: Instrument)
     setup(build) {
         build.onEnd(async (result) => {
             if (instrument.simulatorPackage && result.errors.length === 0) {
-                const jsPath = path.join(path.dirname(build.initialOptions.outfile!), "bundle.js");
-                const cssPath = path.join(path.dirname(build.initialOptions.outfile!), "bundle.css");
+                const jsBundlePath = path.join(path.dirname(build.initialOptions.outfile!), "bundle.js");
+                const cssBundlePath = path.join(path.dirname(build.initialOptions.outfile!), "bundle.css");
 
-                const js = await fs.readFile(jsPath, { encoding: "utf-8" });
-                const css = await fs.readFile(cssPath, { encoding: "utf-8" });
+                const js = await fs.readFile(jsBundlePath, { encoding: "utf-8" });
+                const css = await fs.readFile(cssBundlePath, { encoding: "utf-8" });
 
+                const htmlUiPath = path.join(process.env.PACKAGE_DIR, "html_ui");
                 const packageTarget = path.join(
-                    process.env.PACKAGE_DIR,
-                    "html_ui/Pages/VCockpit/Instruments",
+                    htmlUiPath,
+                    "Pages/VCockpit/Instruments",
                     process.env.PACKAGE_NAME,
                     instrument.name,
                 );
                 await fs.mkdir(packageTarget, { recursive: true });
 
-                const packagePath = path.join("/Pages/VCockpit/Instruments", process.env.PACKAGE_NAME, instrument.name);
-                const fileName = instrument.simulatorPackage.fileName ?? "template";
+                const fileName = instrument.simulatorPackage.fileName ?? "instrument";
                 const templateId = instrument.simulatorPackage.templateId ?? instrument.name;
 
-                await fs.writeFile(path.join(packageTarget, `${fileName}.css`), css);
-                await fs.writeFile(
-                    path.join(packageTarget, `${fileName}.js`),
+                const cssPath = path.join(packageTarget, `${fileName}.css`);
+                const jsPath = path.join(packageTarget, `${fileName}.js`);
+                const instrumentPath =
                     instrument.simulatorPackage.type === "react"
-                        ? await renderFile(path.join(__dirname, "./templates/reactTemplate.cjs"), {
-                              templateId,
-                              jsBundle: js,
-                              instrumentName: `${process.env.PACKAGE_NAME.toLowerCase()}-${templateId.toLowerCase()}`,
-                          })
-                        : js,
-                );
+                        ? path.join(packageTarget, `${fileName}.index.js`)
+                        : jsPath;
+
+                const templateParams = {
+                    templateId,
+                    instrumentName: `${process.env.PACKAGE_NAME.toLowerCase()}-${templateId.toLowerCase()}`,
+                    mountElementId:
+                        instrument.simulatorPackage.type === "react"
+                            ? "MSFS_REACT_MOUNT"
+                            : instrument.simulatorPackage.mountElementId,
+                    imports: instrument.simulatorPackage.imports ?? [],
+                    cssPath: cssPath.replace(htmlUiPath, "").replace(/\\/g, "/"),
+                    jsPath: jsPath.replace(htmlUiPath, "").replace(/\\/g, "/"),
+                    instrumentPath: instrumentPath.replace(htmlUiPath, "").replace(/\\/g, "/"),
+                };
+
+                await fs.writeFile(cssPath, css);
+                await fs.writeFile(jsPath, js);
+
+                if (instrument.simulatorPackage.type === "react") {
+                    await fs.writeFile(
+                        instrumentPath,
+                        await renderFile(path.join(__dirname, "./templates/instrument.cjs"), templateParams),
+                    );
+                }
+
                 await fs.writeFile(
                     path.join(packageTarget, `${fileName}.html`),
-                    await renderFile(path.join(__dirname, "./templates/template.html"), {
-                        templateId,
-                        mountElementId:
-                            instrument.simulatorPackage.type === "react"
-                                ? "MSFS_REACT_MOUNT"
-                                : instrument.simulatorPackage.mountElementId,
-                        imports: instrument.simulatorPackage.imports ?? [],
-                        cssPath: path.join(packagePath, `${fileName}.css`).replace(/\\/g, "/"),
-                        jsPath: path.join(packagePath, `${fileName}.js`).replace(/\\/g, "/"),
-                    }),
+                    await renderFile(path.join(__dirname, "./templates/index.html"), templateParams),
                 );
             }
         });
