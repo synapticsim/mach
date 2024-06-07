@@ -73,11 +73,15 @@ cli.name("mach").version(version).description(description);
 
 commandWithOptions("build")
     .description("compile instruments specified in configuration file")
-    .action((args: MachArgs) => machBuild(MachArgsSchema.parse(args)));
+    .action((args: MachArgs) => {
+        machBuild(MachArgsSchema.parse(args));
+    });
 
 commandWithOptions("watch")
     .description("watch instruments for changes and re-compile bundles when updated")
-    .action((args: MachArgs) => machWatch(MachArgsSchema.parse(args)));
+    .action((args: MachArgs) => {
+        machWatch(MachArgsSchema.parse(args));
+    });
 
 cli.parse();
 

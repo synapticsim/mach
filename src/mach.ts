@@ -8,15 +8,20 @@ import signale from "signale";
 
 import { buildInstrument, watchInstrument } from "./esbuild";
 import { BuildLogger } from "./logger";
-import type { MachArgs } from "./types";
+import type { BuildResultWithMeta, MachArgs } from "./types";
 
-export async function machBuild(args: MachArgs) {
+/**
+ * Run a one-off build with provided arguments.
+ * @returns List of all build results.
+ */
+export async function machBuild(args: MachArgs): Promise<BuildResultWithMeta[]> {
     const instruments = args.config.instruments.filter((instrument) => args.filter?.test(instrument.name) ?? true);
 
     signale.start(`Building ${instruments.length} instruments\n`);
 
     const startTime = performance.now();
-    Promise.all(
+
+    return Promise.all(
         instruments.map(async (instrument) => {
             const result = await buildInstrument(args, instrument, new BuildLogger(instrument.name, args.verbose));
             result.rebuild?.dispose();
@@ -37,15 +42,21 @@ export async function machBuild(args: MachArgs) {
         if (successCount < instruments.length) {
             process.exit(1);
         }
+
+        return results;
     });
 }
 
-export async function machWatch(args: MachArgs) {
+/**
+ * Continuously build instruments when files are updated.
+ * @returns list of initial build results.
+ */
+export async function machWatch(args: MachArgs): Promise<BuildResultWithMeta[]> {
     const instruments = args.config.instruments.filter((instrument) => args.filter?.test(instrument.name) ?? true);
 
-    Promise.all(
+    return Promise.all(
         instruments.map((instrument) =>
-            watchInstrument(args, instrument, new BuildLogger(instrument.name, args.verbose)),
+            watchInstrument(args, instrument, new BuildLogger(instrument.name, args.verbose), false),
         ),
     ).then((results) => {
         if (results.some((res) => res.errors.length > 0)) {
@@ -53,5 +64,7 @@ export async function machWatch(args: MachArgs) {
             process.exit(1);
         }
         signale.watch("Watching for changes\n");
+
+        return results;
     });
 }
