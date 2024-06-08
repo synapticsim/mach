@@ -70,7 +70,7 @@ async function build(
         );
     }
 
-    if (instrument.simulatorPackage && args.skipSimulatorPackage && !module) {
+    if (instrument.simulatorPackage && !args.skipSimulatorPackage && !module) {
         buildOptions.plugins?.push(writePackageSources(args, instrument));
     }
 
