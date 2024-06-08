@@ -11,12 +11,7 @@ import type { BuildLogger } from "./logger";
 import { includeCSS, resolve, writeMetafile, writePackageSources } from "./plugins";
 import { type BuildResultWithMeta, ESBUILD_ERRORS, type Instrument, type MachArgs, type MachConfig } from "./types";
 
-async function build(
-    args: MachArgs,
-    instrument: Instrument,
-    logger: BuildLogger,
-    module = false,
-): Promise<BuildResultWithMeta> {
+async function build(args: MachArgs, instrument: Instrument, module = false): Promise<BuildResultWithMeta> {
     const bundlesDir = args.bundles ?? "./bundles";
 
     const envVars = Object.fromEntries(
@@ -104,7 +99,7 @@ export async function buildInstrument(
     }
 
     const startTime = performance.now();
-    const { success, result } = await build(args, instrument, logger, module)
+    const { success, result } = await build(args, instrument, module)
         .then((result: BuildResultWithMeta) => ({
             success: true,
             result,
