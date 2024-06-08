@@ -7,12 +7,14 @@ import path from "node:path";
 import chalk from "chalk";
 import type { Message } from "esbuild";
 import { filesize } from "filesize";
-import signale, { type DefaultMethods, type Signale } from "signale";
+import signale, { type SignaleOptions, type DefaultMethods, type Signale } from "signale";
 
 import type { BuildResultWithMeta } from "./types";
 
 export class BuildLogger {
-    private readonly logger: Signale<DefaultMethods | "file" | "errorMessage" | "errorLocation">;
+    private readonly logger: Signale<
+        DefaultMethods | "file" | "errorMessage" | "errorLocation" | "warningMessage" | "warningLocation"
+    >;
 
     private readonly verbose: boolean;
 

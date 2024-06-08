@@ -13,7 +13,7 @@ import signale from "signale";
 
 import { description, version } from "./package.json";
 import { machBuild, machWatch } from "./src/mach";
-import { type MachArgs, MachArgsSchema, MachConfigSchema } from "./src/types";
+import { type MachArgs, MachArgsSchema, type MachConfig, MachConfigSchema } from "./src/types";
 
 try {
     dotenv.config();
@@ -22,6 +22,12 @@ try {
 }
 
 const cli = new Command();
+
+const logger = new signale.Signale({
+    types: {
+        error: { badge: "×", label: "error", color: "red", stream: process.stderr },
+    },
+});
 
 const commandWithOptions = (name: string) =>
     cli
@@ -50,21 +56,24 @@ const commandWithOptions = (name: string) =>
             await import(config.replace(/\\/g, "/"))
                 .then((module) => {
                     // Check config integrity
-                    const result = MachConfigSchema.safeParse(module.default);
-                    if (result.success) {
-                        actionCommand.setOptionValue("config", result.data);
-                        signale.info("Loaded config file", chalk.cyanBright(config), "\n");
-                    } else {
-                        signale.error("Invalid config file", chalk.redBright(config));
+                    let result: MachConfig;
+                    try {
+                        result = MachConfigSchema.parse(module.default);
+                    } catch (error) {
+                        logger.error("Invalid config file", chalk.redBright(config));
+                        logger.error(error);
                         process.exit(1);
                     }
+
+                    logger.info("Loaded config file", chalk.cyanBright(config), "\n");
 
                     if (actionCommand.getOptionValue("workInConfigDir")) {
                         process.chdir(path.dirname(config));
                     }
                 })
-                .catch(() => {
-                    signale.error("Unable to load config file", chalk.redBright(config));
+                .catch((error) => {
+                    logger.error("Unable to load config file", chalk.redBright(config));
+                    logger.error(error);
                     process.exit(1);
                 });
         });
