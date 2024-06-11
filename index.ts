@@ -56,9 +56,8 @@ const commandWithOptions = (name: string) =>
             await import(config.replace(/\\/g, "/"))
                 .then((module) => {
                     // Check config integrity
-                    let result: MachConfig;
                     try {
-                        result = MachConfigSchema.parse(module.default);
+                        actionCommand.setOptionValue("config", MachConfigSchema.parse(module.default));
                     } catch (error) {
                         logger.error("Invalid config file", chalk.redBright(config));
                         logger.error(error);
