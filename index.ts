@@ -10,6 +10,7 @@ import chalk from "chalk";
 import { Command } from "commander";
 import dotenv from "dotenv";
 import signale from "signale";
+import { fromError } from "zod-validation-error";
 
 import { description, version } from "./package.json";
 import { machBuild, machWatch } from "./src/mach";
@@ -56,11 +57,12 @@ const commandWithOptions = (name: string) =>
             await import(config.replace(/\\/g, "/"))
                 .then((module) => {
                     // Check config integrity
-                    try {
-                        actionCommand.setOptionValue("config", MachConfigSchema.parse(module.default));
-                    } catch (error) {
+                    const result = MachConfigSchema.safeParse(module.default);
+                    if (result.success) {
+                        actionCommand.setOptionValue("config", result.data);
+                    } else {
                         logger.error("Invalid config file", chalk.redBright(config));
-                        logger.error(error);
+                        logger.error(chalk.white(fromError(result.error)));
                         process.exit(1);
                     }
 
