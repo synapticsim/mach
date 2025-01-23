@@ -3,7 +3,7 @@
  * SPDX-License-Identifier: MIT
  */
 
-import type { BuildResult, LogLevel, Plugin } from "esbuild";
+import type { BuildOptions, BuildResult, LogLevel, Plugin } from "esbuild";
 import { z } from "zod";
 
 export type BuildResultWithMeta = BuildResult<{ metafile: true }>;
@@ -56,9 +56,6 @@ export interface Instrument {
     modules?: Instrument[];
     /** (Required for instruments included as `modules`) Import name to resolve to the bundled module. */
     resolve?: string;
-
-    /** esbuild plugins to include for only this instrument (<https://github.com/esbuild/community-plugins>) */
-    plugins?: Plugin[];
 }
 
 export interface MachConfig {
@@ -66,8 +63,11 @@ export interface MachConfig {
     packageName: string;
     /** Path to directory containing `html_ui`. */
     packageDir: string;
-    /** esbuild plugins to include for all instruments (<https://github.com/esbuild/community-plugins>) */
-    plugins?: Plugin[];
+    /**
+     * esbuild configuration overrides (<https://esbuild.github.io/api/>)
+     * `entryPoints`, `outfile`, `format`, `metafile`, and `bundle` are not overridable.
+     */
+    esbuild?: BuildOptions;
     /** All instruments to be bundled by Mach. */
     instruments: Instrument[];
 }
@@ -129,15 +129,14 @@ export const InstrumentSchema: z.ZodType<Instrument> = z.lazy(() =>
 
         modules: z.array(InstrumentSchema).optional(),
         resolve: z.string().optional(),
-
-        plugins: z.array(PluginSchema).optional(),
     }),
 );
 
 export const MachConfigSchema = z.object({
     packageName: z.string(),
     packageDir: z.string(),
-    plugins: z.array(PluginSchema).optional(),
+    // `passthrough` allows us to enforce an object-shaped value without specifying the fields
+    esbuild: z.object({}).passthrough().optional(),
     instruments: z.array(InstrumentSchema),
 });
 

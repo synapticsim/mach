@@ -16,21 +16,24 @@ function getBuildOptions(args: MachArgs, instrument: Instrument, logger: BuildLo
 
     const options: BuildOptions = {
         absWorkingDir: process.cwd(),
-        entryPoints: [instrument.index],
-        outfile: path.join(bundlesDir, instrument.name, module ? "/module/module.mjs" : "bundle.js"),
-        external: ["/Images/*", "/Fonts/*"],
-        metafile: true,
-        bundle: true,
         target: "es2017",
-        format: module ? "esm" : "iife",
         logLevel: "silent",
         logOverride: args.werror ? ESBUILD_ERRORS : undefined,
         sourcemap: args.outputSourcemaps ? "inline" : undefined,
         minify: args.minify,
+
+        ...args.config.esbuild,
+
+        entryPoints: [instrument.index],
+        outfile: path.join(bundlesDir, instrument.name, module ? "/module/module.mjs" : "bundle.js"),
+        format: module ? "esm" : "iife",
+        metafile: true,
+        bundle: true,
+        loader: { ".otf": "file", ".ttf": "file", ...args.config.esbuild?.loader },
+        external: ["/Images/*", "/Fonts/*", ...(args.config.esbuild?.external ?? [])],
         plugins: [
             environment(logger, { __MACH_IS_MODULE: module.toString() }),
-            ...(args.config.plugins ?? []),
-            ...(instrument.plugins ?? []),
+            ...(args.config.esbuild?.plugins ?? []),
         ],
     };
 
