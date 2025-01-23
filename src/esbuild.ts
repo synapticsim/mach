@@ -8,22 +8,16 @@ import chokidar from "chokidar";
 import esbuild, { type BuildIncremental, type BuildOptions } from "esbuild";
 
 import type { BuildLogger } from "./logger";
-import { includeCSS, resolve, writeMetafile, writePackageSources } from "./plugins";
-import { type BuildResultWithMeta, ESBUILD_ERRORS, type Instrument, type MachArgs, type MachConfig } from "./types";
+import { environment, includeCSS, resolve, writeMetafile, writePackageSources } from "./plugins";
+import { type BuildResultWithMeta, ESBUILD_ERRORS, type Instrument, type MachArgs } from "./types";
 
-async function build(args: MachArgs, instrument: Instrument, module = false): Promise<BuildResultWithMeta> {
+async function build(
+    args: MachArgs,
+    instrument: Instrument,
+    logger: BuildLogger,
+    module = false,
+): Promise<BuildResultWithMeta> {
     const bundlesDir = args.bundles ?? "./bundles";
-
-    const envVars = Object.fromEntries(
-        Object.entries(process.env)
-            .filter(([key]) => /^[A-Za-z_]*$/.test(key))
-            .map(([key, value]) => [
-                `process.env.${key}`,
-                value?.toLowerCase() === "true" || value?.toLowerCase() === "false"
-                    ? value.toLowerCase()
-                    : `"${value?.replace(/\\/g, "/").replace(/"/g, '\\"') ?? ""}"`,
-            ]),
-    );
 
     const buildOptions: BuildOptions & { incremental: true; metafile: true } = {
         absWorkingDir: process.cwd(),
@@ -39,11 +33,11 @@ async function build(args: MachArgs, instrument: Instrument, module = false): Pr
         logOverride: args.werror ? ESBUILD_ERRORS : undefined,
         sourcemap: args.outputSourcemaps ? "inline" : undefined,
         minify: args.minify,
-        plugins: [...(args.config.plugins ?? []), ...(instrument.plugins ?? [])],
-        define: {
-            ...envVars,
-            "process.env.MODULE": module.toString(),
-        },
+        plugins: [
+            environment(logger, { __MACH_IS_MODULE: module.toString() }),
+            ...(args.config.plugins ?? []),
+            ...(instrument.plugins ?? []),
+        ],
     };
 
     if (args.outputMetafile) {
@@ -99,7 +93,7 @@ export async function buildInstrument(
     }
 
     const startTime = performance.now();
-    const { success, result } = await build(args, instrument, module)
+    const { success, result } = await build(args, instrument, logger, module)
         .then((result: BuildResultWithMeta) => ({
             success: true,
             result,

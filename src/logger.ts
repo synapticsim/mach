@@ -7,7 +7,7 @@ import path from "node:path";
 import chalk from "chalk";
 import type { Message } from "esbuild";
 import { filesize } from "filesize";
-import signale, { type SignaleOptions, type DefaultMethods, type Signale } from "signale";
+import signale, { type DefaultMethods, type Signale } from "signale";
 
 import type { BuildResultWithMeta } from "./types";
 
@@ -51,17 +51,20 @@ export class BuildLogger {
         console.log();
         if (result.warnings.length > 0) {
             for (const warning of result.warnings) {
-                this.logger.errorMessage(chalk.yellowBright(`${warning.text} (${warning.id})`));
-                this.logger.errorLocation(
-                    `at ${warning.location?.file}:${warning.location?.line}:${warning.location?.column}`,
+                this.logger.errorMessage(
+                    chalk.yellowBright(warning.id ? `${warning.text} (${warning.id})` : warning.text),
                 );
                 if (warning.notes.length > 0) {
-                    for (const note of warning.notes) {
+                    // esbuild automatically attaches the message "The plugin x was triggered by this import",
+                    // which is not very useful in our case
+                    for (const note of warning.notes.filter(({ text }) => !text.startsWith("The plugin"))) {
                         this.logger.errorMessage(chalk.whiteBright(note.text));
-                        this.logger.errorLocation(
-                            `at ${warning.location?.file}:${warning.location?.line}:${warning.location?.column}`,
-                        );
                     }
+                }
+                if (warning.location) {
+                    this.logger.errorLocation(
+                        `at ${warning.location.file}:${warning.location.line}:${warning.location.column + 1}`,
+                    );
                 }
                 console.log();
             }
@@ -73,15 +76,16 @@ export class BuildLogger {
             `Build failed — ${chalk.redBright(errors.length, errors.length === 1 ? "error" : "errors")}\n`,
         );
         for (const error of errors) {
-            this.logger.errorMessage(chalk.redBright(`${error.text} (${error.id})`));
-            this.logger.errorLocation(`at ${error.location?.file}:${error.location?.line}:${error.location?.column}`);
+            this.logger.errorMessage(chalk.redBright(error.id ? `${error.text} (${error.id})` : error.text));
             if (error.notes.length > 0) {
                 for (const note of error.notes) {
                     this.logger.errorMessage(chalk.whiteBright(note.text));
-                    this.logger.errorLocation(
-                        `at ${error.location?.file}:${error.location?.line}:${error.location?.column}`,
-                    );
                 }
+            }
+            if (error.location) {
+                this.logger.errorLocation(
+                    `at ${error.location.file}:${error.location.line}:${error.location.column + 1}`,
+                );
             }
             console.log();
         }

@@ -5,16 +5,95 @@
 
 import fs from "node:fs/promises";
 import path from "node:path";
-import type { Plugin } from "esbuild";
+import type { Loader, Message, OnLoadArgs, Plugin } from "esbuild";
 import { renderFile } from "template-file";
 
+import type { BuildLogger } from "./logger";
 import type { Instrument, MachArgs } from "./types";
+
+const ENV_REGEX = /process\.env\.(?<variable>[A-Za-z0-9_]+)/gm;
+
+/**
+ * Replace references to `process.env.*` with their value from the current environment.
+ */
+export const environment = (logger: BuildLogger, extend: Record<string, string> = {}): Plugin => ({
+    name: "mach-environment",
+    setup(build) {
+        const loader = (loader: Loader) => async (args: OnLoadArgs) => {
+            let contents = await fs.readFile(args.path, "utf8");
+            if (args.path.includes("node_modules")) {
+                return { contents, loader };
+            }
+
+            let indexOffset = 0;
+
+            // The contents are split on newlines for the purposes of warning creation only
+            // This is done lazily to avoid unnecessary excessive string ops when there are no warnings
+            let lines: string[] | null = null;
+            const warnings: Partial<Message>[] = [];
+
+            for (const match of contents.matchAll(ENV_REGEX)) {
+                if (match.groups === undefined || match.index === undefined) {
+                    continue;
+                }
+
+                const index = match.index + indexOffset;
+                const value = extend[match.groups.variable] ?? process.env[match.groups.variable] ?? null;
+                if (value === null) {
+                    if (lines === null) {
+                        lines = contents.split("\n");
+                    }
+
+                    let line = 0;
+                    let column = match.index;
+
+                    while (column >= lines[line].length) {
+                        // The extra one accounts for the newline that would be there
+                        column -= lines[line].length + 1;
+                        line += 1;
+                    }
+
+                    warnings.push({
+                        text: `${match[0]} is not defined`,
+                        location: {
+                            file: args.path,
+                            namespace: args.namespace,
+                            line: line + 1,
+                            column,
+                            length: match[0].length,
+                            lineText: lines[line],
+                            suggestion: "",
+                        },
+                    });
+                }
+
+                const stringified =
+                    value === "true" ||
+                    value === "false" ||
+                    // biome-ignore lint/suspicious/noGlobalIsNan: we actually want the type coercion here
+                    (value !== null && value !== "" && !isNaN(value as unknown as number))
+                        ? value
+                        : JSON.stringify(value);
+
+                contents = contents.slice(0, index) + stringified + contents.slice(index + match[0].length);
+                indexOffset += stringified.length - match[0].length;
+            }
+
+            return { contents, loader, warnings };
+        };
+
+        build.onLoad({ filter: /\.ts$/ }, loader("ts"));
+        build.onLoad({ filter: /\.tsx$/ }, loader("tsx"));
+        build.onLoad({ filter: /\.js$/ }, loader("js"));
+        build.onLoad({ filter: /\.jsx$/ }, loader("jsx"));
+    },
+});
 
 /**
  * Override module resolution of specified imports.
  */
 export const resolve = (options: { [module: string]: string }): Plugin => ({
-    name: "resolve",
+    name: "mach-resolve",
     setup(build) {
         build.onResolve({ filter: new RegExp(`^(${Object.keys(options).join("|")})$`) }, (args) => ({
             path: options[args.path],
@@ -26,7 +105,7 @@ export const resolve = (options: { [module: string]: string }): Plugin => ({
  * Include specified CSS bundles in main bundle.
  */
 export const includeCSS = (modules: string[]): Plugin => ({
-    name: "includeCSS",
+    name: "mach-include-css",
     setup(build) {
         build.onEnd(() => {
             const cssPath = path.join(path.dirname(build.initialOptions.outfile!), "bundle.css");
@@ -42,7 +121,7 @@ export const includeCSS = (modules: string[]): Plugin => ({
  * Write `build_meta.json` files containing build data into the bundle directory.
  */
 export const writeMetafile: Plugin = {
-    name: "writeMetafile",
+    name: "mach-write-metafile",
     setup(build) {
         build.onEnd((result) => {
             if (result.errors.length === 0) {
@@ -59,7 +138,7 @@ export const writeMetafile: Plugin = {
  * Export simulator packages to `PackageSources` directory
  */
 export const writePackageSources = (args: MachArgs, instrument: Instrument): Plugin => ({
-    name: "writePackageSources",
+    name: "mach-write-package-sources",
     setup(build) {
         build.onEnd(async (result) => {
             if (instrument.simulatorPackage && result.errors.length === 0) {
