@@ -5,26 +5,20 @@
 
 import path from "node:path";
 import chokidar from "chokidar";
-import esbuild, { type BuildIncremental, type BuildOptions } from "esbuild";
+import esbuild, { type BuildOptions, type BuildFailure } from "esbuild";
 
 import type { BuildLogger } from "./logger";
 import { environment, includeCSS, resolve, writeMetafile, writePackageSources } from "./plugins";
 import { type BuildResultWithMeta, ESBUILD_ERRORS, type Instrument, type MachArgs } from "./types";
 
-async function build(
-    args: MachArgs,
-    instrument: Instrument,
-    logger: BuildLogger,
-    module = false,
-): Promise<BuildResultWithMeta> {
+function getBuildOptions(args: MachArgs, instrument: Instrument, logger: BuildLogger, module = false): BuildOptions {
     const bundlesDir = args.bundles ?? "./bundles";
 
-    const buildOptions: BuildOptions & { incremental: true; metafile: true } = {
+    const options: BuildOptions = {
         absWorkingDir: process.cwd(),
         entryPoints: [instrument.index],
         outfile: path.join(bundlesDir, instrument.name, module ? "/module/module.mjs" : "bundle.js"),
         external: ["/Images/*", "/Fonts/*"],
-        incremental: true,
         metafile: true,
         bundle: true,
         target: "es2017",
@@ -41,12 +35,12 @@ async function build(
     };
 
     if (args.outputMetafile) {
-        buildOptions.plugins?.push(writeMetafile);
+        options.plugins!.push(writeMetafile);
     }
 
     // Resolve submodules to their bundles
     if (instrument.modules) {
-        buildOptions.plugins?.push(
+        options.plugins!.push(
             resolve(
                 Object.fromEntries(
                     instrument.modules.map((mod) => [
@@ -60,10 +54,10 @@ async function build(
     }
 
     if (instrument.simulatorPackage && !args.skipSimulatorPackage && !module) {
-        buildOptions.plugins?.push(writePackageSources(args, instrument));
+        options.plugins!.push(writePackageSources(args, instrument));
     }
 
-    return esbuild.build(buildOptions);
+    return options;
 }
 
 export async function buildInstrument(
@@ -72,46 +66,24 @@ export async function buildInstrument(
     logger: BuildLogger,
     module = false,
 ): Promise<BuildResultWithMeta> {
-    let moduleResults: BuildResultWithMeta[] = [];
-
     // Recursively build included submodules
     if (instrument.modules) {
-        moduleResults = await Promise.all(
-            instrument.modules.map((module) => buildInstrument(args, module, logger, true)),
-        );
-
-        // Skip main instrument bundling if the submodule fails.
-        for (const result of moduleResults) {
-            if (result.errors.length > 0) {
-                return result;
-            }
-        }
-
-        for (const result of moduleResults) {
-            result.rebuild?.dispose();
-        }
+        await Promise.all(instrument.modules.map((module) => buildInstrument(args, module, logger, true)));
     }
+
+    const options = getBuildOptions(args, instrument, logger, module);
 
     const startTime = performance.now();
-    const { success, result } = await build(args, instrument, logger, module)
-        .then((result: BuildResultWithMeta) => ({
-            success: true,
-            result,
-        }))
-        .catch((result: BuildResultWithMeta) => {
-            logger.buildFailed(result.errors);
-            return {
-                success: false,
-                result,
-            };
+    return await esbuild
+        .build(options)
+        .then((result) => {
+            logger.buildComplete(instrument.name, performance.now() - startTime, result);
+            return result;
+        })
+        .catch((failure) => {
+            logger.buildFailed((failure as BuildFailure).errors);
+            throw failure;
         });
-    const endTime = performance.now();
-
-    if (success) {
-        logger.buildComplete(instrument.name, endTime - startTime, result);
-    }
-
-    return result;
 }
 
 function resolveFilename(input: string): string {
@@ -130,12 +102,21 @@ export async function watchInstrument(
         await Promise.all(instrument.modules.map((module) => watchInstrument(args, module, logger, true)));
     }
 
-    let result = await buildInstrument(args, instrument, logger, module);
+    const options = getBuildOptions(args, instrument, logger, module);
+    const context = await esbuild.context(options);
 
-    // Chokidar needs a list of files to watch, but we don't get the metafile on a failed build.
-    if (result.errors.length > 0) {
-        return result;
-    }
+    const startTime = performance.now();
+    const result: BuildResultWithMeta = await context
+        .rebuild()
+        .then((result) => {
+            logger.buildComplete(instrument.name, performance.now() - startTime, result);
+            return result;
+        })
+        .catch((failure) => {
+            console.error(failure);
+            logger.buildFailed((failure as BuildFailure).errors);
+            throw failure;
+        });
 
     const builtFiles = Object.keys(result.metafile.inputs).map(resolveFilename);
     const watcher = chokidar.watch(builtFiles);
@@ -143,45 +124,33 @@ export async function watchInstrument(
         logger.changeDetected(filePath);
 
         const startTime = performance.now();
-        const { success, res } = await result
+        await context
             .rebuild()
-            .then((res: BuildIncremental) => ({
-                success: true,
-                res: res as BuildResultWithMeta,
-            }))
-            .catch((res: BuildIncremental) => {
-                logger.buildFailed(res.errors);
-                return {
-                    success: false,
-                    res: res as BuildResultWithMeta,
-                };
-            });
-        const endTime = performance.now();
+            .then((result: BuildResultWithMeta) => {
+                logger.buildComplete(instrument.name, performance.now() - startTime, result);
+                const watchedFiles = watcher.getWatched();
+                const bundledFiles = Object.keys(result.metafile.inputs).map(resolveFilename);
 
-        if (success) {
-            result = res as BuildResultWithMeta;
-
-            logger.buildComplete(instrument.name, endTime - startTime, result);
-
-            const watchedFiles = watcher.getWatched();
-            const bundledFiles = Object.keys(result.metafile.inputs).map(resolveFilename);
-
-            // Watch files that have been added to the bundle
-            for (const file of bundledFiles) {
-                if (!watchedFiles[path.dirname(file)]?.includes(path.basename(file))) {
-                    watcher.add(file);
-                }
-            }
-            // Unwatch files that are no longer included in the bundle
-            for (const [dir, files] of Object.entries(watchedFiles)) {
-                for (const file of files) {
-                    const filePath = path.join(dir, file);
-                    if (!bundledFiles.includes(filePath)) {
-                        watcher.unwatch(filePath);
+                // Watch files that have been added to the bundle
+                for (const file of bundledFiles) {
+                    if (!watchedFiles[path.dirname(file)]?.includes(path.basename(file))) {
+                        watcher.add(file);
                     }
                 }
-            }
-        }
+                // Unwatch files that are no longer included in the bundle
+                for (const [dir, files] of Object.entries(watchedFiles)) {
+                    for (const file of files) {
+                        const filePath = path.join(dir, file);
+                        if (!bundledFiles.includes(filePath)) {
+                            watcher.unwatch(filePath);
+                        }
+                    }
+                }
+            })
+            .catch((failure) => {
+                console.error(failure);
+                logger.buildFailed((failure as BuildFailure).errors);
+            });
     });
 
     return result;

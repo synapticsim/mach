@@ -3,10 +3,10 @@
  * SPDX-License-Identifier: MIT
  */
 
-import type { BuildIncremental, LogLevel, Metafile, Plugin } from "esbuild";
+import type { BuildResult, LogLevel, Plugin } from "esbuild";
 import { z } from "zod";
 
-export type BuildResultWithMeta = BuildIncremental & { metafile: Metafile };
+export type BuildResultWithMeta = BuildResult<{ metafile: true }>;
 
 interface PackageSettings {
     /**

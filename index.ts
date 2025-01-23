@@ -13,7 +13,7 @@ import signale from "signale";
 
 import { description, version } from "./package.json";
 import { machBuild, machWatch } from "./src/mach";
-import { type MachArgs, MachArgsSchema, type MachConfig, MachConfigSchema } from "./src/types";
+import { type MachArgs, MachArgsSchema, MachConfigSchema } from "./src/types";
 
 try {
     dotenv.config();
@@ -82,13 +82,43 @@ cli.name("mach").version(version).description(description);
 commandWithOptions("build")
     .description("compile instruments specified in configuration file")
     .action((args: MachArgs) => {
-        machBuild(MachArgsSchema.parse(args));
+        const parsedArgs = MachArgsSchema.parse(args);
+        const numInstruments = parsedArgs.config.instruments.length;
+
+        signale.start(`Building ${numInstruments} instruments\n`);
+
+        const startTime = performance.now();
+        machBuild(parsedArgs).then((results) => {
+            const stopTime = performance.now();
+            const numSuccess = results.filter(({ status }) => status === "fulfilled").length;
+
+            if (numSuccess > 0) {
+                signale.success(
+                    `Built ${numSuccess} instruments in`,
+                    chalk.greenBright(`${(stopTime - startTime).toFixed()} ms`),
+                    "\n",
+                );
+            } else {
+                signale.error(`All ${numInstruments} instruments failed to build`);
+            }
+
+            if (numSuccess < numInstruments) {
+                process.exit(1);
+            }
+        });
     });
 
 commandWithOptions("watch")
     .description("watch instruments for changes and re-compile bundles when updated")
     .action((args: MachArgs) => {
-        machWatch(MachArgsSchema.parse(args));
+        machWatch(MachArgsSchema.parse(args)).then((results) => {
+            if (results.some(({ status }) => status === "rejected")) {
+                signale.error("Watch mode requires a build-able bundle to initialize");
+                process.exit(1);
+            }
+
+            signale.watch("Watching for changes\n");
+        });
     });
 
 cli.parse();
