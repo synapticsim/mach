@@ -12,6 +12,9 @@ Mach also allows you to create nested instruments, enabling you to bundle MSFS A
 
 ## Usage
 
+> [!IMPORTANT]
+> Please ensure that you are using Node 22!
+
 ### CLI
 
 #### Options
@@ -158,14 +161,3 @@ module.exports = {
     ],
 };
 ```
-
-
-## MSFS Avionics Framework Compatibility
-
-For compatibility with Mach, a modification must be made to the `msfs-avionics` source code:
-```diff
-# src/sdk/components/FSComponent.ts
-- [357]   if (typeof type === 'function' && type.name === 'Fragment') {
-+ [357]   if (typeof type === 'function' && type.name === Fragment.name) {
-```
-These changes are also available through the [`@synaptic-simulations/msfssdk`](https://www.npmjs.com/package/@synaptic-simulations/msfssdk) npm package.
