@@ -5,16 +5,21 @@
  * SPDX-License-Identifier: MIT
  */
 
+import fs from "node:fs";
 import path from "node:path";
 import chalk from "chalk";
 import { Command } from "commander";
 import dotenv from "dotenv";
+// @ts-ignore FIXME: remove the ignore when/if https://github.com/antitoxic/import-single-ts/pull/7 is merged
+import { importSingleTs } from "import-single-ts";
 import signale from "signale";
 import { fromError } from "zod-validation-error";
 
 import { description, version } from "./package.json";
 import { machBuild, machWatch } from "./src/mach";
 import { type MachArgs, MachArgsSchema, MachConfigSchema } from "./src/types";
+
+const CONFIG_FILENAMES = ["mach.config.js", "mach.config.ts"];
 
 try {
     dotenv.config();
@@ -33,7 +38,7 @@ const logger = new signale.Signale({
 const commandWithOptions = (name: string) =>
     cli
         .command(name)
-        .option("-c, --config <filename>", "specify path to configuration file", "./mach.config.js")
+        .option("-c, --config <filename>", "specify path to configuration file")
         .option("-d, --work-in-config-dir", "use config directory as working directory")
         .option("-b, --bundles <dirname>", "bundles output directory", "./bundles")
         .option("-e, --werror", "makes all warnings into errors")
@@ -43,10 +48,8 @@ const commandWithOptions = (name: string) =>
         .option("-t, --output-metafile", "output `build_meta.json` file to bundles directory")
         .option("-u, --output-sourcemaps", "append sourcemaps to the end of bundle files")
         .option("-v, --verbose", "output additional build information")
-        .hook("preAction", async (thisCommand, actionCommand) => {
+        .hook("preAction", async (_thisCommand, actionCommand) => {
             signale.info(`Welcome to ${chalk.cyanBright("Mach")}, v${version}`);
-
-            const config = path.resolve(actionCommand.getOptionValue("config"));
 
             const filter = actionCommand.getOptionValue("filter");
             if (filter) {
@@ -54,7 +57,16 @@ const commandWithOptions = (name: string) =>
             }
 
             // Load config
-            await import(config.replace(/\\/g, "/"))
+
+            let config = actionCommand.getOptionValue("config") ?? CONFIG_FILENAMES.find((file) => fs.existsSync(file));
+            if (!config) {
+                signale.error("Configuration file not found, consider using `-c` or `--config` to specify the path");
+                process.exit(1);
+            }
+
+            config = path.resolve(config).replace(/\\/g, "/");
+            // FIXME: remove the type cast when/if https://github.com/antitoxic/import-single-ts/pull/7 is merged
+            await (config.endsWith(".ts") ? (importSingleTs(config) as Promise<never>) : import(config))
                 .then((module) => {
                     // Check config integrity
                     const result = MachConfigSchema.safeParse(module.default);
