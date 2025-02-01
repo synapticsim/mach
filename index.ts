@@ -17,7 +17,7 @@ import { fromError } from "zod-validation-error";
 
 import { description, version } from "./package.json";
 import { machBuild, machWatch } from "./src/mach";
-import { type MachArgs, MachArgsSchema, MachConfigSchema } from "./src/types";
+import { MachArgsSchema, MachConfigSchema } from "./src/types";
 
 const CONFIG_FILENAMES = ["mach.config.js", "mach.config.ts"];
 
@@ -95,28 +95,31 @@ cli.name("mach").version(version).description(description);
 
 commandWithOptions("build")
     .description("compile instruments specified in configuration file")
-    .action((args: MachArgs) => {
+    .action((args) => {
         const parsedArgs = MachArgsSchema.parse(args);
-        const numInstruments = parsedArgs.config.instruments.length;
+        const instruments = parsedArgs.filter
+            ? parsedArgs.config.instruments.filter((instrument) => parsedArgs.filter!.test(instrument.name))
+            : parsedArgs.config.instruments;
 
-        signale.start(`Building ${numInstruments} instruments\n`);
+        signale.start(`Building ${instruments.length} instrument${instruments.length !== 1 ? "s" : ""}\n`);
 
         const startTime = performance.now();
-        machBuild(parsedArgs).then((results) => {
+        machBuild(instruments, parsedArgs).then((results) => {
             const stopTime = performance.now();
+
             const numSuccess = results.filter(({ status }) => status === "fulfilled").length;
+            const numFailed = instruments.length - numSuccess;
 
             if (numSuccess > 0) {
                 signale.success(
-                    `Built ${numSuccess} instruments in`,
+                    `Built ${numSuccess} instrument${instruments.length !== 1 ? "s" : ""} in`,
                     chalk.greenBright(`${(stopTime - startTime).toFixed()} ms`),
                     "\n",
                 );
-            } else {
-                signale.error(`All ${numInstruments} instruments failed to build`);
             }
 
-            if (numSuccess < numInstruments) {
+            if (numFailed > 0) {
+                signale.error(`${instruments.length} instrument${instruments.length !== 1 ? "s" : ""} failed to build`);
                 process.exit(1);
             }
         });
@@ -124,10 +127,15 @@ commandWithOptions("build")
 
 commandWithOptions("watch")
     .description("watch instruments for changes and re-compile bundles when updated")
-    .action((args: MachArgs) => {
-        machWatch(MachArgsSchema.parse(args)).then((results) => {
+    .action((args) => {
+        const parsedArgs = MachArgsSchema.parse(args);
+        const instruments = parsedArgs.filter
+            ? parsedArgs.config.instruments.filter((instrument) => parsedArgs.filter!.test(instrument.name))
+            : args.config.instruments;
+
+        machWatch(instruments, parsedArgs).then((results) => {
             if (results.some(({ status }) => status === "rejected")) {
-                signale.error("Watch mode requires a build-able bundle to initialize");
+                signale.error("Watch mode requires a successful build to initialize");
                 process.exit(1);
             }
 
