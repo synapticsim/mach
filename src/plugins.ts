@@ -96,7 +96,7 @@ export const resolve = (options: { [module: string]: string }): Plugin => ({
     name: "mach-resolve",
     setup(build) {
         build.onResolve({ filter: new RegExp(`^(${Object.keys(options).join("|")})$`) }, (args) => ({
-            path: options[args.path],
+            path: path.resolve(options[args.path]),
         }));
     },
 });
