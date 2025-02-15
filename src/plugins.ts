@@ -8,7 +8,6 @@ import path from "node:path";
 import type { Loader, Message, OnLoadArgs, Plugin } from "esbuild";
 import { renderFile } from "template-file";
 
-import type { BuildLogger } from "./logger";
 import type { Instrument, MachArgs } from "./types";
 
 const ENV_REGEX = /process\.env\.(?<variable>[A-Za-z0-9_]+)/gm;
@@ -16,7 +15,7 @@ const ENV_REGEX = /process\.env\.(?<variable>[A-Za-z0-9_]+)/gm;
 /**
  * Replace references to `process.env.*` with their value from the current environment.
  */
-export const environment = (logger: BuildLogger, extend: Record<string, string> = {}): Plugin => ({
+export const environment: Plugin = {
     name: "mach-environment",
     setup(build) {
         const loader = (loader: Loader) => async (args: OnLoadArgs) => {
@@ -38,7 +37,7 @@ export const environment = (logger: BuildLogger, extend: Record<string, string> 
                 }
 
                 const index = match.index + indexOffset;
-                const value = extend[match.groups.variable] ?? process.env[match.groups.variable] ?? null;
+                const value = process.env[match.groups.variable] ?? null;
                 if (value === null) {
                     if (lines === null) {
                         lines = contents.split("\n");
@@ -87,35 +86,7 @@ export const environment = (logger: BuildLogger, extend: Record<string, string> 
         build.onLoad({ filter: /\.js$/ }, loader("js"));
         build.onLoad({ filter: /\.jsx$/ }, loader("jsx"));
     },
-});
-
-/**
- * Override module resolution of specified imports.
- */
-export const resolve = (options: { [module: string]: string }): Plugin => ({
-    name: "mach-resolve",
-    setup(build) {
-        build.onResolve({ filter: new RegExp(`^(${Object.keys(options).join("|")})$`) }, (args) => ({
-            path: path.resolve(options[args.path]),
-        }));
-    },
-});
-
-/**
- * Include specified CSS bundles in main bundle.
- */
-export const includeCSS = (modules: string[]): Plugin => ({
-    name: "mach-include-css",
-    setup(build) {
-        build.onEnd(() => {
-            const cssPath = path.join(path.dirname(build.initialOptions.outfile!), "bundle.css");
-            modules.map(async (mod) => {
-                const css = await fs.readFile(mod);
-                await fs.appendFile(cssPath, css);
-            });
-        });
-    },
-});
+};
 
 /**
  * Write `build_meta.json` files containing build data into the bundle directory.

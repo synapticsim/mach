@@ -8,10 +8,10 @@ import chokidar from "chokidar";
 import esbuild, { type BuildOptions, type BuildFailure } from "esbuild";
 
 import type { BuildLogger } from "./logger";
-import { environment, includeCSS, resolve, writeMetafile, writePackageSources } from "./plugins";
+import { environment, writeMetafile, writePackageSources } from "./plugins";
 import { type BuildResultWithMeta, ESBUILD_ERRORS, type Instrument, type MachArgs } from "./types";
 
-function getBuildOptions(args: MachArgs, instrument: Instrument, logger: BuildLogger, module = false): BuildOptions {
+function getBuildOptions(args: MachArgs, instrument: Instrument): BuildOptions {
     const bundlesDir = args.bundles ?? "./bundles";
 
     const options: BuildOptions = {
@@ -25,38 +25,26 @@ function getBuildOptions(args: MachArgs, instrument: Instrument, logger: BuildLo
         ...args.config.esbuild,
 
         entryPoints: [instrument.index],
-        outfile: path.join(bundlesDir, instrument.name, module ? "/module/module.mjs" : "bundle.js"),
-        format: module ? "esm" : "iife",
+        outfile: path.join(bundlesDir, instrument.name, "bundle.js"),
+        format: "iife",
         metafile: true,
         bundle: true,
         loader: { ".otf": "file", ".ttf": "file", ...args.config.esbuild?.loader },
         external: ["/Images/*", "/Fonts/*", ...(args.config.esbuild?.external ?? [])],
-        plugins: [
-            environment(logger, { __MACH_IS_MODULE: module.toString() }),
-            ...(args.config.esbuild?.plugins ?? []),
-        ],
+        plugins: [environment, ...(args.config.esbuild?.plugins ?? [])],
     };
 
     if (args.outputMetafile) {
         options.plugins!.push(writeMetafile);
     }
 
-    // Resolve submodules to their bundles
     if (instrument.modules) {
-        options.plugins!.push(
-            resolve(
-                Object.fromEntries(
-                    instrument.modules.map((mod) => [
-                        mod.resolve,
-                        path.join(bundlesDir, mod.name, "/module/module.mjs"),
-                    ]),
-                ),
-            ),
-            includeCSS(instrument.modules.map((mod) => path.join(bundlesDir, mod.name, "/module/module.css"))),
+        options.alias = Object.fromEntries(
+            instrument.modules.map(({ resolve, index }) => [resolve, path.resolve(index)]),
         );
     }
 
-    if (instrument.simulatorPackage && !args.skipSimulatorPackage && !module) {
+    if (instrument.simulatorPackage && !args.skipSimulatorPackage) {
         options.plugins!.push(writePackageSources(args, instrument));
     }
 
@@ -67,14 +55,8 @@ export async function buildInstrument(
     args: MachArgs,
     instrument: Instrument,
     logger: BuildLogger,
-    module = false,
 ): Promise<BuildResultWithMeta> {
-    // Recursively build included submodules
-    if (instrument.modules) {
-        await Promise.all(instrument.modules.map((module) => buildInstrument(args, module, logger, true)));
-    }
-
-    const options = getBuildOptions(args, instrument, logger, module);
+    const options = getBuildOptions(args, instrument);
 
     const startTime = performance.now();
     return await esbuild
@@ -98,14 +80,8 @@ export async function watchInstrument(
     args: MachArgs,
     instrument: Instrument,
     logger: BuildLogger,
-    module = false,
 ): Promise<BuildResultWithMeta> {
-    // Recursively watch included submodules
-    if (instrument.modules) {
-        await Promise.all(instrument.modules.map((module) => watchInstrument(args, module, logger, true)));
-    }
-
-    const options = getBuildOptions(args, instrument, logger, module);
+    const options = getBuildOptions(args, instrument);
     const context = await esbuild.context(options);
 
     const startTime = performance.now();
