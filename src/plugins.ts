@@ -157,13 +157,23 @@ export const writePackageSources = (args: MachArgs, instrument: Instrument): Plu
                 if (instrument.simulatorPackage.type === "react") {
                     await fs.writeFile(
                         instrumentPath,
-                        await renderFile(path.join(__dirname, "./templates/instrument.cjs"), templateParams),
+                        await renderFile(
+                            instrument.simulatorPackage.jsTemplate
+                                ? path.resolve(instrument.simulatorPackage.jsTemplate)
+                                : path.join(__dirname, "./templates/instrument.cjs"),
+                            templateParams,
+                        ),
                     );
                 }
 
                 await fs.writeFile(
                     path.join(packageTarget, `${fileName}.html`),
-                    await renderFile(path.join(__dirname, "./templates/index.html"), templateParams),
+                    await renderFile(
+                        instrument.simulatorPackage.htmlTemplate
+                            ? path.resolve(instrument.simulatorPackage.htmlTemplate)
+                            : path.join(__dirname, "./templates/index.html"),
+                        templateParams,
+                    ),
                 );
             }
         });

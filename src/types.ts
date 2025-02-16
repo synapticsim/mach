@@ -19,6 +19,8 @@ interface PackageSettings {
     fileName?: string;
     /** Simulator packages to import in the HTML template. */
     imports?: string[];
+    /** Paths to custom HTML template files */
+    htmlTemplate?: string;
 }
 
 interface ReactInstrumentPackageSettings extends PackageSettings {
@@ -27,6 +29,8 @@ interface ReactInstrumentPackageSettings extends PackageSettings {
     templateId?: string;
     /** Whether the instrument is interactive or not. Defaults to `true`. */
     isInteractive?: boolean;
+    /** Paths to custom JavaScript template files */
+    jsTemplate?: string;
 }
 
 interface BaseInstrumentPackageSettings extends PackageSettings {
@@ -115,6 +119,7 @@ export const InstrumentSchema: z.ZodType<Instrument> = z.lazy(() =>
                     imports: z.array(z.string()).optional(),
                     templateId: z.string().optional(),
                     isInteractive: z.boolean().optional(),
+                    htmlTemplate: z.string().optional(),
                 }),
                 z.object({
                     type: z.literal("baseInstrument"),
@@ -123,6 +128,8 @@ export const InstrumentSchema: z.ZodType<Instrument> = z.lazy(() =>
                     imports: z.array(z.string()).optional(),
                     templateId: z.string(),
                     mountElementId: z.string(),
+                    htmlTemplate: z.string().optional(),
+                    jsTemplate: z.string().optional(),
                 }),
             ])
             .optional(),

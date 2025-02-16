@@ -3,17 +3,6 @@
 /* global registerInstrument */
 
 class _MachInstrument_{{ templateId }} extends BaseInstrument {
-    constructor() {
-        super();
-        let lastTime = this._lastTime;
-        this.getDeltaTime = () => {
-            const nowTime = Date.now();
-            const deltaTime = nowTime - lastTime;
-            lastTime = nowTime;
-            return deltaTime;
-        };
-    }
-
     get templateID() {
         return '{{ templateId }}';
     }
@@ -33,13 +22,11 @@ class _MachInstrument_{{ templateId }} extends BaseInstrument {
 
     Update() {
         super.Update();
-        this.dispatchEvent(new CustomEvent("update", { detail: this.getDeltaTime() }));
+        document.dispatchEvent(new CustomEvent("update"));
     }
 
     onInteractionEvent(event) {
-        const eventName = String(event);
-        this.dispatchEvent(new CustomEvent(eventName));
-        this.dispatchEvent(new CustomEvent("*", { detail: eventName }));
+        document.dispatchEvent(new CustomEvent(event));
     }
 }
 
