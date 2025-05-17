@@ -8,7 +8,7 @@
 import fs from "node:fs";
 import path from "node:path";
 import chalk from "chalk";
-import { Command } from "commander";
+import { Command, Option } from "commander";
 import dotenv from "dotenv";
 // @ts-ignore FIXME: remove the ignore when/if https://github.com/antitoxic/import-single-ts/pull/7 is merged
 import { importSingleTs } from "import-single-ts";
@@ -46,7 +46,11 @@ const commandWithOptions = (name: string) =>
         .option("-m, --minify", "minify bundle code")
         .option("-s, --skip-simulator-package", "skips writing simulator package templates")
         .option("-t, --output-metafile", "output `build_meta.json` file to bundles directory")
-        .option("-u, --output-sourcemaps", "append sourcemaps to the end of bundle files")
+        .addOption(
+            new Option("-p, --sourcemaps [type]", "generate sourcemaps")
+                .choices(["linked", "external", "inline", "both"])
+                .preset("inline"),
+        )
         .option("-v, --verbose", "output additional build information")
         .hook("preAction", async (_thisCommand, actionCommand) => {
             signale.info(`Welcome to ${chalk.cyanBright("Mach")}, v${version}`);

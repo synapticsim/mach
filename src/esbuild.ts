@@ -19,7 +19,7 @@ function getBuildOptions(args: MachArgs, instrument: Instrument): BuildOptions {
         target: "es2017",
         logLevel: "silent",
         logOverride: args.werror ? ESBUILD_ERRORS : undefined,
-        sourcemap: args.outputSourcemaps ? "inline" : undefined,
+        sourcemap: args.sourcemaps,
         minify: args.minify,
 
         ...args.config.esbuild,

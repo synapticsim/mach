@@ -27,7 +27,8 @@ Mach also allows you to create nested instruments, enabling you to bundle MSFS A
 - `-m, --minify` minify bundle code
 - `-s, --skip-simulator-package` skips writing simulator package templates
 - `-t, --output-metafile` output `build_meta.json` file to bundles directory
-- `-u, --output-sourcemaps` append sourcemaps to the end of bundle files
+- `-p, --sourcemaps` generate inline sourcemaps
+- `-p, --sourcemaps [linked | external | inline | both]` generate sourcemaps (see https://esbuild.github.io/api/#sourcemap for details on options)
 - `-v, --verbose` output additional build information
 
 #### `mach build [options]`

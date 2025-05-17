@@ -91,8 +91,8 @@ export interface MachArgs {
     verbose?: boolean;
     /** Output `build_meta.json` file to bundle directory. */
     outputMetafile?: boolean;
-    /** Append JS source maps to end of bundles. */
-    outputSourcemaps?: boolean;
+    /** Generate source maps. */
+    sourcemaps?: "linked" | "external" | "inline" | "both";
     /** Skip writing simulator package files. */
     skipSimulatorPackage?: boolean;
 }
@@ -155,7 +155,7 @@ export const MachArgsSchema = z.object({
     minify: z.boolean().optional(),
     verbose: z.boolean().optional(),
     outputMetafile: z.boolean().optional(),
-    outputSourcemaps: z.boolean().optional(),
+    sourcemaps: z.enum(["linked", "external", "inline", "both"]).optional(),
     skipSimulatorPackage: z.boolean().optional(),
 });
 
