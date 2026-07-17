@@ -15,7 +15,7 @@ const ENV_REGEX = /process\.env\.(?<variable>[A-Za-z0-9_]+)/gm;
 /**
  * Replace references to `process.env.*` with their value from the current environment.
  */
-export const environment: Plugin = {
+export const environment = (instrument: Instrument): Plugin => ({
     name: "mach-environment",
     setup(build) {
         const loader = (loader: Loader) => async (args: OnLoadArgs) => {
@@ -37,7 +37,10 @@ export const environment: Plugin = {
                 }
 
                 const index = match.index + indexOffset;
-                const value = process.env[match.groups.variable] ?? null;
+                const value =
+                    match.groups.variable === "__MACH_INSTRUMENT"
+                        ? instrument.name
+                        : (process.env[match.groups.variable] ?? null);
                 if (value === null) {
                     if (lines === null) {
                         lines = contents.split("\n");
@@ -86,7 +89,7 @@ export const environment: Plugin = {
         build.onLoad({ filter: /\.js$/ }, loader("js"));
         build.onLoad({ filter: /\.jsx$/ }, loader("jsx"));
     },
-};
+});
 
 /**
  * Write `build_meta.json` files containing build data into the bundle directory.
