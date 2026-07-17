@@ -19,7 +19,7 @@
 		"esbuild"
 	],
 	"author": "Michael Romashov <mromashov@icloud.com>",
-	"repository": "https://github.com/Synaptic-Simulations/mach",
+	"repository": "https://github.com/synapticsim/mach.git",
 	"license": "MIT",
 	"dependencies": {
 		"chalk": "^5.4.1",
