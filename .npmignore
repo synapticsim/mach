@@ -1,3 +1,2 @@
-.github/
-src/
-biome.json
+*
+!dist/**/*

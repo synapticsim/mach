@@ -15,9 +15,9 @@ import { importSingleTs } from "import-single-ts";
 import signale from "signale";
 import { fromError } from "zod-validation-error";
 
-import { description, version } from "./package.json";
-import { machBuild, machWatch } from "./src/mach";
-import { MachArgsSchema, MachConfigSchema } from "./src/types";
+import { description, version } from "../package.json";
+import { machBuild, machWatch } from "./mach";
+import { MachArgsSchema, MachConfigSchema } from "./types";
 
 const CONFIG_FILENAMES = ["mach.config.js", "mach.config.ts"];
 
@@ -149,5 +149,5 @@ commandWithOptions("watch")
 
 cli.parse();
 
-export { machBuild, machWatch } from "./src/mach";
-export * from "./src/types";
+export { machBuild, machWatch } from "./mach";
+export * from "./types";
