@@ -18,7 +18,20 @@ jobs:
         with:
           node-version: "22"
           registry-url: "https://registry.npmjs.org"
+
       - run: npm install -g npm@latest
       - run: npm ci
       - run: npm run build
-      - run: npm publish --access public
+
+      - id: check-tag
+        run: |
+          if [[ "${GITHUB_REF_NAME}" =~ -rc[0-9]+$ ]]; then
+            echo "rc=true" >> "$GITHUB_OUTPUT"
+          else
+            echo "rc=false" >> "$GITHUB_OUTPUT"
+          fi
+
+      - if: steps.check-tag.outputs.rc == 'true'
+        run: npm publish --access public --tag rc
+      - if: steps.check-tag.outputs.rc == 'false'
+        run: npm publish --access public
