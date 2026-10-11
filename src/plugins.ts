@@ -69,15 +69,10 @@ export const environment = (instrument: Instrument): Plugin => ({
                     });
                 }
 
-                const stringified =
-                    value === "true" ||
-                    value === "false" ||
-                    // biome-ignore lint/suspicious/noGlobalIsNan: we actually want the type coercion here
-                    (value !== null && value !== "" && !isNaN(value as unknown as number))
-                        ? value
-                        : JSON.stringify(value);
+                const stringified = JSON.stringify(value);
 
                 contents = contents.slice(0, index) + stringified + contents.slice(index + match[0].length);
+
                 indexOffset += stringified.length - match[0].length;
             }
 

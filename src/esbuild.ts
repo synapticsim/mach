@@ -5,7 +5,7 @@
 
 import path from "node:path";
 import chokidar from "chokidar";
-import esbuild, { type BuildOptions, type BuildFailure } from "esbuild";
+import esbuild, { type BuildFailure, type BuildOptions } from "esbuild";
 
 import type { BuildLogger } from "./logger";
 import { environment, writeMetafile, writePackageSources } from "./plugins";
@@ -35,7 +35,7 @@ function getBuildOptions(args: MachArgs, instrument: Instrument): BuildOptions {
     };
 
     if (args.outputMetafile) {
-        options.plugins!.push(writeMetafile);
+        options.plugins?.push(writeMetafile);
     }
 
     if (instrument.modules) {
@@ -45,7 +45,7 @@ function getBuildOptions(args: MachArgs, instrument: Instrument): BuildOptions {
     }
 
     if (instrument.simulatorPackage && !args.skipSimulatorPackage) {
-        options.plugins!.push(writePackageSources(args, instrument));
+        options.plugins?.push(writePackageSources(args, instrument));
     }
 
     return options;

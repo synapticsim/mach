@@ -99,10 +99,10 @@ export interface MachArgs {
 
 export const PluginSchema: z.ZodType<Plugin> = z.object({
     name: z.string(),
-    setup: z
-        .function()
-        .args(z.any())
-        .returns(z.union([z.void(), z.promise(z.void())])),
+    setup: z.function({
+        input: [z.any()],
+        output: z.union([z.void(), z.promise(z.void())]),
+    }),
 });
 
 export const InstrumentSchema: z.ZodType<Instrument> = z.lazy(() =>
@@ -142,8 +142,8 @@ export const InstrumentSchema: z.ZodType<Instrument> = z.lazy(() =>
 export const MachConfigSchema = z.object({
     packageName: z.string(),
     packageDir: z.string(),
-    // `passthrough` allows us to enforce an object-shaped value without specifying the fields
-    esbuild: z.object({}).passthrough().optional(),
+    // `looseObject` allows us to enforce an object-shaped value without specifying the fields
+    esbuild: z.looseObject({}).optional(),
     instruments: z.array(InstrumentSchema),
 });
 

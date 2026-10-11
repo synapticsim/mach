@@ -10,7 +10,6 @@ import path from "node:path";
 import chalk from "chalk";
 import { Command, Option } from "commander";
 import dotenv from "dotenv";
-// @ts-ignore FIXME: remove the ignore when/if https://github.com/antitoxic/import-single-ts/pull/7 is merged
 import { importSingleTs } from "import-single-ts";
 import signale from "signale";
 import { fromError } from "zod-validation-error";
@@ -22,7 +21,7 @@ import { MachArgsSchema, MachConfigSchema } from "./types";
 const CONFIG_FILENAMES = ["mach.config.js", "mach.config.ts"];
 
 try {
-    dotenv.config();
+    dotenv.config({ quiet: true });
 } catch {
     // .env is optional, but dotenv throws an error if it cannot load it
 }
@@ -102,7 +101,7 @@ commandWithOptions("build")
     .action((args) => {
         const parsedArgs = MachArgsSchema.parse(args);
         const instruments = parsedArgs.filter
-            ? parsedArgs.config.instruments.filter((instrument) => parsedArgs.filter!.test(instrument.name))
+            ? parsedArgs.config.instruments.filter((instrument) => parsedArgs.filter?.test(instrument.name))
             : parsedArgs.config.instruments;
 
         signale.start(`Building ${instruments.length} instrument${instruments.length !== 1 ? "s" : ""}\n`);
@@ -134,7 +133,7 @@ commandWithOptions("watch")
     .action((args) => {
         const parsedArgs = MachArgsSchema.parse(args);
         const instruments = parsedArgs.filter
-            ? parsedArgs.config.instruments.filter((instrument) => parsedArgs.filter!.test(instrument.name))
+            ? parsedArgs.config.instruments.filter((instrument) => parsedArgs.filter?.test(instrument.name))
             : args.config.instruments;
 
         machWatch(instruments, parsedArgs).then((results) => {
